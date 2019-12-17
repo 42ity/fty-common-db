@@ -30,21 +30,52 @@
 #ifdef __cplusplus
 namespace DBAssetsDiscovery {
 
-/**
- * @function get_candidate_config Get first candidate configuration of an asset
+#define REQUEST_WHERE_CANDIDATE_CONFIG " WHERE config.id_asset_element = :asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE"
+#define REQUEST_WHERE_ALL_CONFIG       " WHERE config.id_asset_element =: asset_id"
+
+// TBD ???
+//typedef std::map<std::string, nutcommon::DeviceConfiguration> DeviceConfigurationIdList;
+typedef std::vector<std::pair< std::string, nutcommon::DeviceConfiguration>> DeviceConfigurationIdList;
+
+/* @function get_candidate_config Get first candidate configuration of an asset
  * @param asset_name The asset name to get configuration
- * @param config [out] The return configuration of the asset
+ * @param config_id [out] The return configuration id
+ * @param device_config [out] The return configuration of the asset
  * @return {integer} 0 if no error else < 0
  */
-int get_candidate_config (std::string asset_name, nutcommon::DeviceConfiguration& config);
+int get_candidate_config (std::string asset_name, std::string& config_id, nutcommon::DeviceConfiguration& device_config);
 
 /**
- * @function get_candidate_config Get all candidate configurations of an asset
+ * @function get_candidate_config_list Get all candidate configurations of an asset
  * @param asset_name The asset name to get configurations
- * @param configs [out] The return configurations of the asset
+ * @param device_config_id_list [out] The return configuration list of the asset
  * @return {integer} 0 if no error else < 0
  */
-int get_candidate_configs (std::string asset_name, nutcommon::DeviceConfigurations& configs);
+int get_candidate_config_list (std::string asset_name, DeviceConfigurationIdList& device_config_id_list);
+
+/**
+ * @function get_all_config_list Get all configurations of an asset
+ * @param asset_name The asset name to get configuration
+ * @param device_config_id_list [out] The return configuration list of the asset
+ * @return {integer} 0 if no error else < 0
+ */
+int get_all_config_list (std::string asset_name, DeviceConfigurationIdList& device_config_id_list);
+
+/**
+ * @function get_config_working Get working value of a configuration
+ * @param config_id The configuration id
+ * @param working_value [out] The return working value
+ * @return {integer} 0 if no error else < 0
+ */
+int get_config_working (std::string config_id, bool &working_value);
+
+/**
+ * @function set_config_working Change working value of a configuration
+ * @param config_id The configuration id
+ * @param working_value The new working value
+ * @return {integer} 0 if no error else < 0
+ */
+int set_config_working (std::string config_id, bool working_value);
 
 
 } // namespace
