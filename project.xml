@@ -97,5 +97,6 @@
     <class name = "fty_common_db_asset_insert" selftest = "0" stable = "1" > Functions inserting assets to database. </class>
     <class name = "fty_common_db_asset_update" selftest = "0" stable = "1" > Functions updating assets in database. </class>
     <class name = "fty_common_db_uptime" selftest = "0" stable = "1" > Uptime support function. </class>
+    <class name = "fty_common_db_discovery" selftest = "0" stable = "1" > Functions discovery config.  </class>
 
 </project>

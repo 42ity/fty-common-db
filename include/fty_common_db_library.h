@@ -101,6 +101,7 @@ typedef struct _fty_common_db_uptime_t fty_common_db_uptime_t;
 #include "fty_common_db_asset_insert.h"
 #include "fty_common_db_asset_update.h"
 #include "fty_common_db_uptime.h"
+#include "fty_common_db_discovery.h"
 
 #ifdef FTY_COMMON_DB_BUILD_DRAFT_API
 

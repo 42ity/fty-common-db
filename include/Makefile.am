@@ -12,6 +12,7 @@ nobase_include_HEADERS = \
     fty_common_db_asset_insert.h \
     fty_common_db_asset_update.h \
     fty_common_db_uptime.h \
+    fty_common_db_discovery.h \
     fty_common_db_library.h
 
 

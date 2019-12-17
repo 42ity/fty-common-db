@@ -41,6 +41,7 @@ static test_item_t
 all_tests [] = {
 // Tests for stable public classes:
     { "fty_common_db_asset", fty_common_db_asset_test, true, true, NULL },
+    { "fty_common_db_discovery", fty_common_db_discovery_test, true, true, NULL },
     {NULL, NULL, 0, 0, NULL}          //  Sentinel
 };
 
