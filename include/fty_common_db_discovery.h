@@ -77,6 +77,13 @@ int get_config_working (std::string config_id, bool &working_value);
  */
 int set_config_working (std::string config_id, bool working_value);
 
+/**
+ * @function modify_config_priorities Change priorities of configuration list for an asset
+ * @param asset_name The asset name to change priorities of configuration list
+ * @param configuration_id_list The list of configuration for priorities (first in the list is the highest priority)
+ * @return {integer} 0 if no error else < 0
+ */
+int modify_config_priorities (std::string asset_name, std::vector<std::string>& configuration_id_list);
 
 } // namespace
 

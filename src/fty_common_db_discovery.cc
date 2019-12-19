@@ -477,6 +477,106 @@ int set_config_working (std::string config_id, bool working_value)
     return set_config_working_ex(conn, config_id, working_value);
 }
 
+/**
+ * @function modify_config_priorities Change priorities of configuration list for an asset
+ * @param conn The connection to the database
+ * @param asset_name The asset name to change priorities of configuration list
+ * @param configuration_id_list The list of configuration for priorities (first in the list is the highest priority)
+ * @return {integer} 0 if no error else < 0
+ */
+int modify_config_priorities_ex (tntdb::Connection conn, std::string asset_name, std::vector<std::string>& configuration_id_list)
+{
+    int64_t asset_id = get_asset_id(conn, asset_name);
+    if (asset_id < 0) {
+        log_error ("element %s not found", asset_name.c_str());
+        return -2;
+    }
+    try {
+        tntdb::Statement st = conn.prepareCached(
+            " SELECT id_nut_configuration, priority"
+            " FROM"
+            "   t_bios_nut_configuration"
+            " WHERE id_asset_element = :asset_id"
+        );
+
+        tntdb::Result result = st.set("asset_id", asset_id).select();
+        std::string config_id;
+        int max_priority = -1;
+        int priority = -1;
+        std::vector<std::string> current_config_id_list;
+        for (auto &row: result) {
+            row["id_nut_configuration"].get(config_id);
+            row["priority"].get(priority);
+            if (priority > max_priority) max_priority = priority;
+            current_config_id_list.push_back(config_id);
+            // Test if config present in input configuration list
+            auto it = std::find(configuration_id_list.begin(), configuration_id_list.end(), config_id);
+            if (it == configuration_id_list.end()) {
+                log_error ("Configuration id %s not found in input configuration list for %s", config_id.c_str(), asset_name.c_str());
+                return -3;
+            }
+        }
+        // Test if all input config present in database
+        for (auto &configuration_id : configuration_id_list) {
+            auto it = std::find(current_config_id_list.begin(), current_config_id_list.end(), configuration_id);
+            if (it == current_config_id_list.end()) {
+                log_error ("Configuration id %s not found in database for %s", configuration_id.c_str(), asset_name.c_str());
+                return -4;
+            }
+        }
+        // Change configuration priorities
+        // Note: adding a increment value for each value for avoid duplication key.
+        // This increment will be removed just after updates
+        max_priority ++;
+        priority = max_priority;
+        for (auto &configuration_id : configuration_id_list) {
+            std::string request = " UPDATE t_bios_nut_configuration"
+                                  " SET ";
+            std::ostringstream s;
+            s << "priority = " << priority;
+            request += s.str();
+            request += " WHERE id_asset_element = :asset_id AND id_nut_configuration = :config_id";
+            st = conn.prepareCached(request);
+            st.set("asset_id", asset_id).set("config_id", configuration_id).execute();
+            priority ++;
+        }
+        // Remove increment value for priorities
+        if (max_priority > 0) {
+            st = conn.prepareCached(
+                " UPDATE t_bios_nut_configuration"
+                " SET priority = priority - :max_priority"
+                " WHERE id_asset_element = :asset_id"
+            );
+            st.set("max_priority", max_priority).set("asset_id", asset_id).execute();
+        }
+        return 0;
+    }
+    catch (const std::exception &e) {
+        LOG_END_ABNORMAL(e);
+        return -10;
+    }
+}
+
+/**
+ * @function modify_config_priorities Change priorities of configuration list for an asset
+ * @param asset_name The asset name to change priorities of configuration list
+ * @param configuration_id_list The list of configuration for priorities (first in the list is the highest priority)
+ * @return {integer} 0 if no error else < 0
+ */
+int modify_config_priorities (std::string asset_name, std::vector<std::string>& configuration_id_list)
+{
+    tntdb::Connection conn;
+    try {
+        conn = tntdb::connect(DBConn::url);
+    }
+    catch(...)
+    {
+        log_error("no connection to database");
+        return -1;
+    }
+    return modify_config_priorities_ex(conn, asset_name, configuration_id_list);
+}
+
 } // namespace
 
 //  --------------------------------------------------------------------------
@@ -582,6 +682,32 @@ int op_table_test (tntdb::Connection& conn, std::string request_table)
     return 0;
 }
 
+int get_priorities_base_test (tntdb::Connection& conn, int asset_id, std::vector<std::pair< std::string, std::string>>& configuration_id_list)
+{
+    try {
+        tntdb::Statement st = conn.prepareCached(
+            " SELECT id_nut_configuration, priority"
+            " FROM"
+            "   t_bios_nut_configuration"
+            " WHERE id_asset_element = :asset_id"
+            " ORDER BY priority ASC"
+        );
+        tntdb::Result result = st.set("asset_id", asset_id).select();
+        for (auto &row: result) {
+            std::string config_id;
+            std::string priority;
+            row["id_nut_configuration"].get(config_id);
+            row["priority"].get(priority);
+            configuration_id_list.push_back(std::make_pair(config_id, priority));
+        }
+    }
+    catch (const std::exception &e) {
+        LOG_END_ABNORMAL(e);
+        return -1;
+    }
+    return 0;
+}
+
 void del_data_tables_test (tntdb::Connection& conn)
 {
     assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration_default_attribute")) == 0);
@@ -599,6 +725,51 @@ void fty_common_db_discovery_test (bool verbose)
 {
     printf (" * fty_common_db_discovery: ");
 
+    std::map<std::string, std::vector<std::map<std::string, std::string>>> test_results = {
+        {
+            "ups-1",
+            {
+                {
+                    { "mibs", "eaton_ups" },
+                    { "pollfreq", "21" },
+                    { "snmp_retries", "201" },
+                    { "snmp_version", "v3" },
+                    { "synchronous", "yes" }
+                },
+                {
+                    { "mibs", "eaton_ups" },
+                    { "pollfreq", "11" },
+                    { "snmp_retries", "101" },
+                    { "snmp_version", "v1" },
+                    { "synchronous", "yes" }
+                }
+            }
+        },
+        {
+            "ups-2",
+            {
+                {
+                    { "mibs", "eaton_ups" },
+                    { "pollfreq", "51" },
+                    { "snmp_retries", "501" },
+                    { "snmp_version", "v3" },
+                    { "synchronous", "yes" }
+                }
+            }
+        },
+        {
+            "ups-3",
+            {
+                {
+                    { "pollfreq", "91"},
+                    { "protocol", "{asset.protocol.http:http}" },
+                    { "snmp_retries", "901" },
+                    { "synchronous", "no" }
+                }
+            }
+        }
+    };
+
     // Get current directory
     char current_working_dir[FILENAME_MAX];
     getcwd(current_working_dir, FILENAME_MAX);
@@ -606,6 +777,10 @@ void fty_common_db_discovery_test (bool verbose)
     std::stringstream buffer;
     buffer << current_working_dir << "/" << SELFTEST_DIR_RW;
     std::string test_working_dir = buffer.str();
+
+    // FIXME
+    // Stop previous instance of database if test failed
+    stop_database_test(test_working_dir);
 
     // Create and start database for test
     start_database_test(test_working_dir);
@@ -775,51 +950,6 @@ void fty_common_db_discovery_test (bool verbose)
         " (2, 'snmp_version', 'v3')")) == 0
     );
 
-    std::map<std::string, std::vector<std::map<std::string, std::string>>> test_results = {
-        {
-            "ups-1",
-            {
-                {
-                    { "mibs", "eaton_ups" },
-                    { "pollfreq", "21" },
-                    { "snmp_retries", "201" },
-                    { "snmp_version", "v3" },
-                    { "synchronous", "yes" }
-                },
-                {
-                    { "mibs", "eaton_ups" },
-                    { "pollfreq", "11" },
-                    { "snmp_retries", "101" },
-                    { "snmp_version", "v1" },
-                    { "synchronous", "yes" }
-                }
-            }
-        },
-        {
-            "ups-2",
-            {
-                {
-                    { "mibs", "eaton_ups" },
-                    { "pollfreq", "51" },
-                    { "snmp_retries", "501" },
-                    { "snmp_version", "v3" },
-                    { "synchronous", "yes" }
-                }
-            }
-        },
-        {
-            "ups-3",
-            {
-                {
-                    { "pollfreq", "91"},
-                    { "protocol", "{asset.protocol.http:http}" },
-                    { "snmp_retries", "901" },
-                    { "synchronous", "no" }
-                }
-            }
-        }
-    };
-
     int asset_id = -1;
     int config_id = -1;
     int config_type = -1;
@@ -900,6 +1030,54 @@ void fty_common_db_discovery_test (bool verbose)
         // Get current value
         assert(DBAssetsDiscovery::get_config_working_ex(conn, config_id, value) == 0);
         assert(initial_value == value);
+    }
+
+    // Test modify_config_priorities function
+    {
+        std::string asset_name = "ups-1";
+        std::vector<std::pair< std::string, std::string>> config_priority_list;
+        std::vector<std::string> init_config_id_list;
+        std::vector<std::string> config_id_list;
+        int asset_id = DBAssetsDiscovery::get_asset_id(conn, asset_name);
+        assert(get_priorities_base_test(conn, asset_id, config_priority_list) == 0);
+        // Save initial priority order
+        for (auto it = config_priority_list.begin(); it != config_priority_list.end(); it ++) {
+            init_config_id_list.push_back(it->first);
+        }
+        // Inverse priority order
+        for (auto rit = config_priority_list.rbegin(); rit != config_priority_list.rend(); ++ rit) {
+            config_id_list.push_back(rit->first);
+        }
+        // Apply priority order changing
+        assert(DBAssetsDiscovery::modify_config_priorities_ex(conn, asset_name, config_id_list) == 0);
+        // Read and check result
+        config_priority_list.erase(config_priority_list.begin(), config_priority_list.end());
+        assert(get_priorities_base_test(conn, asset_id, config_priority_list) == 0);
+        int num_priority = 0;
+        auto it_config_priority_list = config_priority_list.begin();
+        auto it_config_id_list = config_id_list.begin();
+        while (it_config_priority_list != config_priority_list.end() && it_config_id_list != config_id_list.end()) {
+            assert((*it_config_priority_list).first == *it_config_id_list);
+            assert(num_priority == std::stoi(it_config_priority_list->second));
+            num_priority ++;
+            it_config_priority_list ++;
+            it_config_id_list ++;
+        }
+        // Restore previous priority order
+        assert(DBAssetsDiscovery::modify_config_priorities_ex(conn, asset_name, init_config_id_list) == 0);
+        // Read and check result
+        config_priority_list.erase(config_priority_list.begin(), config_priority_list.end());
+        assert(get_priorities_base_test(conn, asset_id, config_priority_list) == 0);
+        num_priority = 0;
+        it_config_priority_list = config_priority_list.begin();
+        auto it_init_config_id_list = init_config_id_list.begin();
+        while (it_config_priority_list != config_priority_list.end() && it_init_config_id_list != init_config_id_list.end()) {
+            assert((*it_config_priority_list).first == *it_init_config_id_list);
+            assert(num_priority == std::stoi(it_config_priority_list->second));
+            num_priority ++;
+            it_config_priority_list ++;
+            it_init_config_id_list ++;
+        }
     }
 
     // Remove tables  data previously added
