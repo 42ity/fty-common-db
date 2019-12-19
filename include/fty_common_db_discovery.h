@@ -85,6 +85,23 @@ int set_config_working (std::string config_id, bool working_value);
  */
 int modify_config_priorities (std::string asset_name, std::vector<std::string>& configuration_id_list);
 
+/**
+ * @function insert_config Insert a new configuration for an asset
+ * @param asset_name The asset name to add  new configuration
+ * @param is_working Value of is_working attribute
+ * @param is_enabled Value of is_enabled attribute
+ * @param key_value_asset_list The list of key values to add in the asset configuration attribute table
+ * @return {integer} configuration id if no error else < 0
+ */
+int insert_config (std::string asset_name, int config_type, bool is_working, bool is_enabled, std::map<std::string, std::string>& key_value_asset_list);
+
+/**
+ * @function remove_config Remove a configuration from database
+ * @param config_id The configuration id to remove
+ * @return {integer} 0 if no error else < 0
+ */
+int remove_config (int config_id);
+
 } // namespace
 
 void fty_common_db_discovery_test (bool verbose);

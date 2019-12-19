@@ -61,12 +61,12 @@ int64_t get_asset_id (tntdb::Connection conn, std::string asset_name)
         return id;
     }
     catch (const tntdb::NotFound &e) {
-        log_error ("element %s not found", asset_name.c_str ());
+        log_error("Element %s not found", asset_name.c_str ());
         return -1;
     }
     catch (const std::exception &e)
     {
-        log_error ("exception caught %s for element %s", e.what (), asset_name.c_str ());
+        log_error("Exception caught %s for element %s", e.what (), asset_name.c_str ());
         return -2;
     }
 }
@@ -127,7 +127,7 @@ int get_candidate_config_ex (tntdb::Connection conn, std::string asset_name, std
 {
     int64_t asset_id = get_asset_id(conn, asset_name);
     if (asset_id < 0) {
-        log_error ("element %s not found", asset_name.c_str());
+        log_error("Element %s not found", asset_name.c_str());
         return -2;
     }
     try {
@@ -143,7 +143,7 @@ int get_candidate_config_ex (tntdb::Connection conn, std::string asset_name, std
         nutcommon::DeviceConfiguration default_config;
         int res = request_database_config(conn, request, asset_id, default_config_id, default_config);
         if (res < 0) {
-            log_error("error during getting default configuration");
+            log_error("Error during getting default configuration");
             return -3;
         }
 
@@ -159,12 +159,12 @@ int get_candidate_config_ex (tntdb::Connection conn, std::string asset_name, std
         nutcommon::DeviceConfiguration asset_config;
         res = request_database_config(conn, request, asset_id, asset_config_id, asset_config);
         if (res < 0) {
-            log_error("error during getting asset configuration");
+            log_error("Error during getting asset configuration");
             return -4;
         }
 
         if (default_config_id != asset_config_id) {
-            log_error("default config id different of asset config id");
+            log_error("Default config id different of asset config id");
             return -5;
         }
 
@@ -203,7 +203,7 @@ int get_candidate_config (std::string asset_name, std::string& config_id, nutcom
     }
     catch(...)
     {
-        log_error("no connection to database");
+        log_error("No connection to database");
         return -1;
     }
     return get_candidate_config_ex(conn, asset_name, config_id, device_config);
@@ -267,7 +267,7 @@ int get_config_list_ex (tntdb::Connection conn, std::string request_where, std::
 {
     int64_t asset_id = get_asset_id(conn, asset_name);
     if (asset_id < 0) {
-        log_error ("element %s not found", asset_name.c_str());
+        log_error("Element %s not found", asset_name.c_str());
         return -2;
     }
     try {
@@ -282,7 +282,7 @@ int get_config_list_ex (tntdb::Connection conn, std::string request_where, std::
         DeviceConfigurationIdList default_config_id_list;
         int res = request_database_config_list(conn, request, asset_id, default_config_id_list);
         if (res < 0) {
-            log_error("error during getting default configurations");
+            log_error("Error during getting default configurations");
             return -3;
         }
 
@@ -297,13 +297,13 @@ int get_config_list_ex (tntdb::Connection conn, std::string request_where, std::
         DeviceConfigurationIdList asset_config_id_list;
         res = request_database_config_list(conn, request, asset_id, asset_config_id_list);
         if (res < 0) {
-            log_error("error during getting asset configurations");
+            log_error("Error during getting asset configurations");
             return -4;
         }
 
-        // TBD ???
+        // FIXME ???
         //if (default_config_id_list.size() != asset_config_id_list.size()) {
-        //    log_error("error size of asset configurations is different of size of default configurations");
+        //    log_error("Error size of asset configurations is different of size of default configurations");
         //    return -5;
         //}
 
@@ -355,7 +355,7 @@ int get_candidate_config_list (std::string asset_name,  DeviceConfigurationIdLis
     }
     catch(...)
     {
-        log_error("no connection to database");
+        log_error("No connection to database");
         return -1;
     }
     std::string request_where = REQUEST_WHERE_CANDIDATE_CONFIG;
@@ -376,7 +376,7 @@ int get_all_config_list (std::string asset_name, DeviceConfigurationIdList& devi
     }
     catch(...)
     {
-        log_error("no connection to database");
+        log_error("No connection to database");
         return -1;
     }
     std::string request_where = REQUEST_WHERE_ALL_CONFIG;
@@ -424,7 +424,7 @@ int get_config_working (std::string config_id, bool &working_value)
     }
     catch(...)
     {
-        log_error("no connection to database");
+        log_error("No connection to database");
         return -1;
     }
     return get_config_working_ex(conn, config_id, working_value);
@@ -471,7 +471,7 @@ int set_config_working (std::string config_id, bool working_value)
     }
     catch(...)
     {
-        log_error("no connection to database");
+        log_error("No connection to database");
         return -1;
     }
     return set_config_working_ex(conn, config_id, working_value);
@@ -488,7 +488,7 @@ int modify_config_priorities_ex (tntdb::Connection conn, std::string asset_name,
 {
     int64_t asset_id = get_asset_id(conn, asset_name);
     if (asset_id < 0) {
-        log_error ("element %s not found", asset_name.c_str());
+        log_error("Element %s not found", asset_name.c_str());
         return -2;
     }
     try {
@@ -512,7 +512,7 @@ int modify_config_priorities_ex (tntdb::Connection conn, std::string asset_name,
             // Test if config present in input configuration list
             auto it = std::find(configuration_id_list.begin(), configuration_id_list.end(), config_id);
             if (it == configuration_id_list.end()) {
-                log_error ("Configuration id %s not found in input configuration list for %s", config_id.c_str(), asset_name.c_str());
+                log_error("Configuration id %s not found in input configuration list for %s", config_id.c_str(), asset_name.c_str());
                 return -3;
             }
         }
@@ -520,7 +520,7 @@ int modify_config_priorities_ex (tntdb::Connection conn, std::string asset_name,
         for (auto &configuration_id : configuration_id_list) {
             auto it = std::find(current_config_id_list.begin(), current_config_id_list.end(), configuration_id);
             if (it == current_config_id_list.end()) {
-                log_error ("Configuration id %s not found in database for %s", configuration_id.c_str(), asset_name.c_str());
+                log_error("Configuration id %s not found in database for %s", configuration_id.c_str(), asset_name.c_str());
                 return -4;
             }
         }
@@ -571,10 +571,175 @@ int modify_config_priorities (std::string asset_name, std::vector<std::string>& 
     }
     catch(...)
     {
-        log_error("no connection to database");
+        log_error("No connection to database");
         return -1;
     }
     return modify_config_priorities_ex(conn, asset_name, configuration_id_list);
+}
+
+/**
+ * @function insert_config_ex Insert a new configuration for an asset
+ * @param conn The connection to the database
+ * @param asset_name The asset name to add  new configuration
+ * @param is_working Value of is_working attribute
+ * @param is_enabled Value of is_enabled attribute
+ * @param key_value_asset_list The list of key values to add in the asset configuration attribute table
+ * @return {integer} configuration id if no error else < 0
+ */
+int insert_config_ex (tntdb::Connection conn, std::string asset_name, int config_type, bool is_working, bool is_enabled, std::map<std::string, std::string>& key_value_asset_list)
+{
+    int64_t asset_id = get_asset_id(conn, asset_name);
+    if (asset_id < 0) {
+        log_error("Element %s not found", asset_name.c_str());
+        return -2;
+    }
+    try {
+        // Get max priority
+        tntdb::Statement st = conn.prepareCached(
+            " SELECT MAX(priority)"
+            " FROM"
+            "   t_bios_nut_configuration"
+            " WHERE id_asset_element = :asset_id"
+        );
+        tntdb::Row row = st.set("asset_id", asset_id).selectRow();
+        int max_priority = -1;
+        row[0].get(max_priority);
+
+        // Insert new config
+        st = conn.prepareCached(
+            " INSERT INTO t_bios_nut_configuration"
+            " (id_nut_configuration_type, id_asset_element, priority, is_enabled, is_working)"
+            " VALUES "
+            " (:config_type, :asset_id, :priority, :is_enabled, :is_working)"
+        );
+        st.set("config_type", config_type).
+            set("asset_id", asset_id).
+            set("priority", max_priority + 1).
+            set("is_enabled", is_enabled).
+            set("is_working", is_working).
+            execute();
+        int config_id = conn.lastInsertId();
+        if (config_id < 0) {
+            log_error("No id when added new configuration for %s", asset_name.c_str());
+            return -3;
+        }
+
+        // Insert the list of key values in the asset configuration attribute table
+        std::ostringstream s;
+        s << " INSERT IGNORE INTO t_bios_nut_configuration_attribute"
+          << " (id_nut_configuration, keytag, value)"
+          << " VALUES";
+        int nb;
+        for (nb = 0; nb < key_value_asset_list.size() - 1; nb ++) {
+            s << " (:config_id, :key_" << nb << ", :value_" << nb << "),";
+        }
+        s << " (:config_id, :key_" << nb << ", :value_" << nb << ")";
+        st = conn.prepareCached(s.str());
+        st = st.set("config_id", config_id);
+        nb = 0;
+        for (auto it = key_value_asset_list.begin(); it != key_value_asset_list.end(); ++it) {
+            s.str("");
+            s << "key_" << nb;
+            st = st.set(s.str(), it->first);
+            s.str("");
+            s << "value_" << nb;
+            st = st.set(s.str(), it->second);
+            nb ++;
+        }
+        st.execute();
+        return config_id;
+    }
+    catch (const std::exception &e) {
+        LOG_END_ABNORMAL(e);
+        return -4;
+    }
+}
+
+/**
+ * @function insert_config Insert a new configuration for an asset
+ * @param asset_name The asset name to add  new configuration
+ * @param is_working Value of is_working attribute
+ * @param is_enabled Value of is_enabled attribute
+ * @param key_value_asset_list The list of key values to add in the asset configuration attribute table
+ * @return {integer} configuration id if no error else < 0
+ */
+int insert_config (std::string asset_name, int config_type, bool is_working, bool is_enabled, std::map<std::string, std::string>& key_value_asset_list)
+{
+    tntdb::Connection conn;
+    try {
+        conn = tntdb::connect(DBConn::url);
+    }
+    catch(...)
+    {
+        log_error("No connection to database");
+        return -1;
+    }
+    return insert_config_ex(conn, asset_name, config_type, is_working, is_enabled, key_value_asset_list);
+}
+
+/**
+ * @function remove_config_ex Remove a configuration from database
+ * @param conn The connection to the database
+ * @param config_id The configuration id to remove
+ * @return {integer} 0 if no error else < 0
+ */
+int remove_config_ex (tntdb::Connection conn, int config_id)
+{
+    try {
+        // Remove configuration in t_bios_nut_configuration_secw_document table
+        tntdb::Statement st = conn.prepareCached(
+            " DELETE"
+            " FROM"
+            "   t_bios_nut_configuration_secw_document"
+            " WHERE"
+            "   id_nut_configuration = :config_id"
+        );
+        st.set("config_id", config_id).execute();
+
+        // Then remove configuration in t_bios_nut_configuration_attribute table
+        st = conn.prepareCached(
+            " DELETE"
+            " FROM"
+            "   t_bios_nut_configuration_attribute"
+            " WHERE"
+            "   id_nut_configuration = :config_id"
+        );
+        st.set("config_id", config_id).execute();
+
+        // Finally, remove configuration in t_bios_nut_configuration table
+        st = conn.prepareCached(
+            " DELETE"
+            " FROM"
+            "   t_bios_nut_configuration"
+            " WHERE"
+            "   id_nut_configuration = :config_id"
+        );
+        st.set("config_id", config_id).execute();
+        return 0;
+    }
+    catch (const std::exception &e) {
+        LOG_END_ABNORMAL(e);
+        return -2;
+    }
+}
+
+/**
+ * @function remove_config Remove a configuration from database
+ * @param config_id The configuration id to remove
+ * @return {integer} 0 if no error else < 0
+ */
+int remove_config (int config_id)
+{
+    tntdb::Connection conn;
+    try {
+        conn = tntdb::connect(DBConn::url);
+    }
+    catch(...)
+    {
+        log_error("No connection to database");
+        return -1;
+    }
+    return remove_config_ex(conn, config_id);
 }
 
 } // namespace
@@ -599,7 +764,7 @@ int modify_config_priorities (std::string asset_name, std::vector<std::string>& 
 //std::string run_working_path_test("/var/run/fty_common_db_discovery");
 std::string run_working_path_test("/home/admin/fty_common_db_discovery");
 
-int start_database_test (std::string test_working_dir)
+int test_start_database (std::string test_working_dir)
 {
     int mysql_port = 30001;
 
@@ -643,7 +808,7 @@ int start_database_test (std::string test_working_dir)
     remove(file_path.c_str());
 }
 
-void stop_database_test (std::string test_working_dir)
+void test_stop_database (std::string test_working_dir)
 {
     // Create shell script to execute
     std::stringstream buffer;
@@ -669,7 +834,7 @@ void stop_database_test (std::string test_working_dir)
     remove(file_path.c_str());
 }
 
-int op_table_test (tntdb::Connection& conn, std::string request_table)
+int test_op_table (tntdb::Connection& conn, std::string request_table)
 {
     try {
         tntdb::Statement st = conn.prepareCached(request_table);
@@ -682,7 +847,7 @@ int op_table_test (tntdb::Connection& conn, std::string request_table)
     return 0;
 }
 
-int get_priorities_base_test (tntdb::Connection& conn, int asset_id, std::vector<std::pair< std::string, std::string>>& configuration_id_list)
+int test_get_priorities_base (tntdb::Connection& conn, int asset_id, std::vector<std::pair< std::string, std::string>>& configuration_id_list)
 {
     try {
         tntdb::Statement st = conn.prepareCached(
@@ -708,17 +873,18 @@ int get_priorities_base_test (tntdb::Connection& conn, int asset_id, std::vector
     return 0;
 }
 
-void del_data_tables_test (tntdb::Connection& conn)
+// FIXME: Not used
+void test_del_data_database (tntdb::Connection& conn)
 {
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration_default_attribute")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration_attribute")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration_type_secw_document_type_requirements")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration_secw_document")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_nut_configuration_type")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_secw_document")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_secw_document_type")) == 0);
-    assert(op_table_test(conn, std::string("DELETE FROM t_bios_asset_element WHERE id_asset_element <> 1")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_nut_configuration_default_attribute")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_nut_configuration_attribute")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_nut_configuration_type_secw_document_type_requirements")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_nut_configuration_secw_document")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_nut_configuration")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_nut_configuration_type")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_secw_document")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_secw_document_type")) == 0);
+    assert(test_op_table(conn, std::string("DELETE FROM t_bios_asset_element WHERE id_asset_element <> 1")) == 0);
 }
 
 void fty_common_db_discovery_test (bool verbose)
@@ -780,10 +946,10 @@ void fty_common_db_discovery_test (bool verbose)
 
     // FIXME
     // Stop previous instance of database if test failed
-    stop_database_test(test_working_dir);
+    test_stop_database(test_working_dir);
 
     // Create and start database for test
-    start_database_test(test_working_dir);
+    test_start_database(test_working_dir);
 
     tntdb::Connection conn;
     try {
@@ -799,7 +965,7 @@ void fty_common_db_discovery_test (bool verbose)
     }
 
     // Remove tables data if previous tests failed
-    del_data_tables_test(conn);
+    //test_del_data_database(conn);
 
     std::string t_asset_name[] = { "ups-1", "ups-2", "ups-3" };
     int nb_assets = sizeof(t_asset_name) / sizeof(char *);
@@ -831,7 +997,7 @@ void fty_common_db_discovery_test (bool verbose)
     }
 
     // Data for table t_bios_secw_document_type
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_secw_document_type"
         " (id_secw_document_type)"
         " VALUES"
@@ -843,7 +1009,7 @@ void fty_common_db_discovery_test (bool verbose)
     );
 
     // Data for table t_bios_secw_document
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_secw_document"
         " (id_secw_document, id_secw_document_type)"
         " VALUES"
@@ -856,7 +1022,7 @@ void fty_common_db_discovery_test (bool verbose)
     );
 
     // Data for table t_bios_nut_configuration_type
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_nut_configuration_type"
         " (id_nut_configuration_type, configuration_name, driver, port)"
         " VALUES"
@@ -885,10 +1051,10 @@ void fty_common_db_discovery_test (bool verbose)
        << " (7, 1, " << t_asset_id[2] << ", 0, FALSE, TRUE),"
        << " (8, 2, " << t_asset_id[2] << ", 1, FALSE, TRUE),"
        << " (9, 3, " << t_asset_id[2] << ", 2, TRUE, TRUE)";  // 1: 1st Active
-    assert(op_table_test(conn, ss.str()) == 0);
+    assert(test_op_table(conn, ss.str()) == 0);
 
     // Data for table t_bios_nut_configuration_secw_document
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_nut_configuration_secw_document"
         " (id_nut_configuration, id_secw_document)"
         " VALUES"
@@ -901,7 +1067,7 @@ void fty_common_db_discovery_test (bool verbose)
     );
 
     // Data for table t_bios_nut_configuration_type_secw_document_type_requirements
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_nut_configuration_type_secw_document_type_requirements"
         " (id_nut_configuration_type, id_secw_document_type)"
         " VALUES"
@@ -914,7 +1080,7 @@ void fty_common_db_discovery_test (bool verbose)
     );
 
     // Data for table t_bios_nut_configuration_attribute
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_nut_configuration_attribute"
         " (id_nut_configuration, keytag, value)"
         " VALUES"
@@ -933,7 +1099,7 @@ void fty_common_db_discovery_test (bool verbose)
     );
 
     // Data for table t_bios_nut_configuration_default_attribute
-    assert(op_table_test(conn, std::string(
+    assert(test_op_table(conn, std::string(
         " INSERT IGNORE INTO t_bios_nut_configuration_default_attribute"
         " (id_nut_configuration_type, keytag, value)"
         " VALUES"
@@ -955,7 +1121,7 @@ void fty_common_db_discovery_test (bool verbose)
     int config_type = -1;
 
     int i = 0;
-    /* for each asset */
+    // Test for each asset
     for (int i = 0; i < nb_assets; i ++) {
         asset_id = t_asset_id[i];
         std::cout << "\n<<<<<<<<<<<<<<<<<<< Test with asset " << t_asset_name[i] << "/" << asset_id << ":" << std::endl;
@@ -1039,7 +1205,7 @@ void fty_common_db_discovery_test (bool verbose)
         std::vector<std::string> init_config_id_list;
         std::vector<std::string> config_id_list;
         int asset_id = DBAssetsDiscovery::get_asset_id(conn, asset_name);
-        assert(get_priorities_base_test(conn, asset_id, config_priority_list) == 0);
+        assert(test_get_priorities_base(conn, asset_id, config_priority_list) == 0);
         // Save initial priority order
         for (auto it = config_priority_list.begin(); it != config_priority_list.end(); it ++) {
             init_config_id_list.push_back(it->first);
@@ -1052,7 +1218,7 @@ void fty_common_db_discovery_test (bool verbose)
         assert(DBAssetsDiscovery::modify_config_priorities_ex(conn, asset_name, config_id_list) == 0);
         // Read and check result
         config_priority_list.erase(config_priority_list.begin(), config_priority_list.end());
-        assert(get_priorities_base_test(conn, asset_id, config_priority_list) == 0);
+        assert(test_get_priorities_base(conn, asset_id, config_priority_list) == 0);
         int num_priority = 0;
         auto it_config_priority_list = config_priority_list.begin();
         auto it_config_id_list = config_id_list.begin();
@@ -1067,7 +1233,7 @@ void fty_common_db_discovery_test (bool verbose)
         assert(DBAssetsDiscovery::modify_config_priorities_ex(conn, asset_name, init_config_id_list) == 0);
         // Read and check result
         config_priority_list.erase(config_priority_list.begin(), config_priority_list.end());
-        assert(get_priorities_base_test(conn, asset_id, config_priority_list) == 0);
+        assert(test_get_priorities_base(conn, asset_id, config_priority_list) == 0);
         num_priority = 0;
         it_config_priority_list = config_priority_list.begin();
         auto it_init_config_id_list = init_config_id_list.begin();
@@ -1080,11 +1246,22 @@ void fty_common_db_discovery_test (bool verbose)
         }
     }
 
-    // Remove tables  data previously added
-    del_data_tables_test(conn);
+    // Test insert_config function
+    {
+        std::map<std::string, std::string> key_value_asset_list = {{ "Key1", "Val1"}, { "Key2", "Val2"}, { "Key3", "Val3"}};
+        int config_type = 1;
+        // Insert new config
+        int config_id = DBAssetsDiscovery::insert_config_ex(conn, "ups-1", config_type, true, true, key_value_asset_list);
+        assert(config_id >= 0);
+        // Remove inserted config
+        assert(DBAssetsDiscovery::remove_config_ex(conn, config_id) == 0);
+    }
+
+    // Remove data previously added in database
+    //test_del_data_database(conn);
 
     // Stop and remove database
-    stop_database_test(test_working_dir);
+    test_stop_database(test_working_dir);
 
     printf ("\nEnd tests \n");
 }
