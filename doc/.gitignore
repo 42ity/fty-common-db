@@ -25,6 +25,8 @@ fty_common_db_asset_update.txt
 fty_common_db_asset_update.doc
 fty_common_db_uptime.txt
 fty_common_db_uptime.doc
+fty_common_db_discovery.txt
+fty_common_db_discovery.doc
 
 # Make sure to track the manually maintained project description
 !*.adoc

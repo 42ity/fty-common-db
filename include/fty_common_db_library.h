@@ -90,6 +90,8 @@ typedef struct _fty_common_db_asset_update_t fty_common_db_asset_update_t;
 #define FTY_COMMON_DB_ASSET_UPDATE_T_DEFINED
 typedef struct _fty_common_db_uptime_t fty_common_db_uptime_t;
 #define FTY_COMMON_DB_UPTIME_T_DEFINED
+typedef struct _fty_common_db_discovery_t fty_common_db_discovery_t;
+#define FTY_COMMON_DB_DISCOVERY_T_DEFINED
 
 
 //  Public classes, each with its own header file
