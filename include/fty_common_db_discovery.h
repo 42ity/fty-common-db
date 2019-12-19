@@ -27,15 +27,20 @@
 #include "fty_common_library.h"
 #include "fty_common_nut_utils.h"
 
+#include <iomanip>
+#include <map>
+#include <tuple>
+#include <iostream>
+
 #ifdef __cplusplus
 namespace DBAssetsDiscovery {
 
 #define REQUEST_WHERE_CANDIDATE_CONFIG " WHERE config.id_asset_element = :asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE"
 #define REQUEST_WHERE_ALL_CONFIG       " WHERE config.id_asset_element =: asset_id"
 
-// TBD ???
-//typedef std::map<std::string, nutcommon::DeviceConfiguration> DeviceConfigurationIdList;
 typedef std::vector<std::pair< std::string, nutcommon::DeviceConfiguration>> DeviceConfigurationIdList;
+typedef std::tuple<int, std::string, std::string, std::string, std::map<std::string, std::string>, std::vector<std::string>> ConfigurationInfo;
+typedef std::vector<ConfigurationInfo> ConfigurationInfoList;
 
 /* @function get_candidate_config Get first candidate configuration of an asset
  * @param asset_name The asset name to get configuration
@@ -101,6 +106,56 @@ int insert_config (std::string asset_name, int config_type, bool is_working, boo
  * @return {integer} 0 if no error else < 0
  */
 int remove_config (int config_id);
+
+/**
+ * @function get_configuration_from_type Get specific configuration information for each configuration type
+ * @param config_type The configuration type
+ * @param [out] config_info The returned configuration information
+ * @return {integer} 0 if no error else < 0
+ */
+int get_configuration_from_type (/*int config_type, */ConfigurationInfoList& config_info_list);
+
+/**
+ * @function get_config_type_from_info Get configuration type from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {integer} Return configuration type
+ */
+int get_config_type_from_info(ConfigurationInfo& config_info);
+
+/**
+ * @function get_config_name_from_info Get configuration name from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {string} Return configuration name
+ */
+std::string get_config_name_from_info(ConfigurationInfo& config_info);
+
+/**
+ * @function get_config_driver_from_info Get configuration driver from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {string} Return configuration name
+ */
+std::string get_config_driver_from_info(ConfigurationInfo& config_info);
+
+/**
+ * @function get_config_port_from_info Get configuration port from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {string} Return configuration port
+ */
+std::string get_config_port_from_info(ConfigurationInfo& config_info);
+
+/**
+ * @function get_config_default_key_value_list_from_info Get configuration default key value list from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {map} Return configuration default key value list
+ */
+std::map<std::string, std::string> get_config_default_key_value_list_from_info(ConfigurationInfo& config_info);
+
+/**
+ * @function get_config_document_type_list_from_info Get configuration document type list from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {list} Return configuration document type list
+ */
+std::vector<std::string> get_config_document_type_list_from_info(ConfigurationInfo& config_info);
 
 } // namespace
 

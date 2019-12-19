@@ -33,8 +33,6 @@
 #include <fty_common_nut_utils.h>
 
 #include <assert.h>
-#include <iomanip>
-#include <map>
 
 namespace DBAssetsDiscovery {
 
@@ -742,6 +740,137 @@ int remove_config (int config_id)
     return remove_config_ex(conn, config_id);
 }
 
+/**
+ * @function get_configuration_from_type Get specific configuration information for each configuration type
+ * @param conn The connection to the database
+ * @param config_type The configuration type
+ * @param [out] config_info The returned configuration information
+ * @return {integer} 0 if no error else < 0
+ */
+int get_configuration_from_type_ex (tntdb::Connection conn, /*int config_type,*/ ConfigurationInfoList& config_info_list)
+{
+    try {
+        // Get all configuration type
+        tntdb::Statement st = conn.prepareCached(
+            " SELECT id_nut_configuration_type, configuration_name, driver, port"
+            " FROM"
+            "   t_bios_nut_configuration_type"
+        );
+        tntdb::Result result = st.select();
+        for (auto &row: result) {
+            int config_type;
+            row["id_nut_configuration_type"].get(config_type);
+            std::string config_name;
+            row["configuration_name"].get(config_name);
+            std::string driver;
+            row["driver"].get(driver);
+            std::string port;
+            row["port"].get(port);
+
+            // Get all default key values according configuration type value
+            std::map<std::string, std::string> default_values_list;
+            tntdb::Statement st1 = conn.prepareCached(
+                " SELECT keytag, value"
+                " FROM"
+                "   t_bios_nut_configuration_default_attribute"
+                " WHERE id_nut_configuration_type = :config_type"
+            );
+            tntdb::Result result1 = st1.set("config_type", config_type).select();
+            for (auto &row1: result1) {
+                std::string key;
+                row1["keytag"].get(key);
+                std::string value;
+                row1["value"].get(value);
+                default_values_list.insert(std::make_pair(key, value));
+            }
+
+            // Get all document type according configuration type value
+            std::vector<std::string> document_type_list;
+            tntdb::Statement st2 = conn.prepareCached(
+                " SELECT id_secw_document_type"
+                " FROM"
+                "   t_bios_nut_configuration_type_secw_document_type_requirements"
+                " WHERE id_nut_configuration_type = :config_type"
+            );
+            tntdb::Result result2 = st2.set("config_type", config_type).select();
+            for (auto &row2: result2) {
+                std::string document_type;
+                row2["id_secw_document_type"].get(document_type);
+                document_type_list.push_back(document_type);
+            }
+            ConfigurationInfo config_info = std::make_tuple(config_type, config_name, driver, port, default_values_list, document_type_list);
+            config_info_list.push_back(config_info);
+        }
+        return 0;
+    }
+    catch (const std::exception &e) {
+        LOG_END_ABNORMAL(e);
+        return -2;
+    }
+}
+
+/**
+ * @function get_configuration_from_type Get specific configuration information for each configuration type
+ * @param config_type The configuration type
+ * @param [out] config_info The returned configuration information
+ * @return {integer} 0 if no error else < 0
+ */
+int get_configuration_from_type (/*int config_type, */ConfigurationInfoList& config_info_list)
+{
+    tntdb::Connection conn;
+    try {
+        conn = tntdb::connect(DBConn::url);
+    }
+    catch(...)
+    {
+        log_error("No connection to database");
+        return -1;
+    }
+    return get_configuration_from_type_ex(conn, /* config_type, */ config_info_list);
+}
+
+/**
+ * @function get_config_type_from_info Get configuration type from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {integer} Return configuration type
+ */
+int get_config_type_from_info(ConfigurationInfo& config_info) { return std::get<0>(config_info); };
+
+/**
+ * @function get_config_name_from_info Get configuration name from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {string} Return configuration name
+ */
+std::string get_config_name_from_info(ConfigurationInfo& config_info) { return std::get<1>(config_info); };
+
+/**
+ * @function get_config_driver_from_info Get configuration driver from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {string} Return configuration name
+ */
+std::string get_config_driver_from_info(ConfigurationInfo& config_info) { return std::get<2>(config_info); };
+
+/**
+ * @function get_config_port_from_info Get configuration port from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {string} Return configuration port
+ */
+std::string get_config_port_from_info(ConfigurationInfo& config_info) { return std::get<3>(config_info); };
+
+/**
+ * @function get_config_default_key_value_list_from_info Get configuration default key value list from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {map} Return configuration default key value list
+ */
+std::map<std::string, std::string> get_config_default_key_value_list_from_info(ConfigurationInfo& config_info) { return std::get<4>(config_info); };
+
+/**
+ * @function get_config_document_type_list_from_info Get configuration document type list from specific configuration information
+  * @param config_info The specific configuration information
+  * @return {list} Return configuration document type list
+ */
+std::vector<std::string> get_config_document_type_list_from_info(ConfigurationInfo& config_info) { return std::get<5>(config_info); };
+
 } // namespace
 
 //  --------------------------------------------------------------------------
@@ -1072,6 +1201,7 @@ void fty_common_db_discovery_test (bool verbose)
         " (id_nut_configuration_type, id_secw_document_type)"
         " VALUES"
         " (1, 'Snmpv1'),"
+        " (2, 'Snmpv1'),"
         " (2, 'Snmpv3'),"
         " (3, 'UserAndPassword'),"
         " (4, 'UserAndPassword'),"
@@ -1255,6 +1385,33 @@ void fty_common_db_discovery_test (bool verbose)
         assert(config_id >= 0);
         // Remove inserted config
         assert(DBAssetsDiscovery::remove_config_ex(conn, config_id) == 0);
+    }
+
+    // Test get_configuration_from_type function
+    {
+        DBAssetsDiscovery::ConfigurationInfoList config_info_list;
+        assert(DBAssetsDiscovery::get_configuration_from_type_ex(conn, /*config_type,*/ config_info_list) == 0);
+        auto it_config_info_list = config_info_list.begin();
+        while (it_config_info_list != config_info_list.end() && it_config_info_list != config_info_list.end()) {
+            std::cout << "--------------" << std::endl;
+            std::cout << "type=" << DBAssetsDiscovery::get_config_type_from_info(*it_config_info_list) << std::endl;
+            std::cout << "name=" << DBAssetsDiscovery::get_config_name_from_info(*it_config_info_list) << std::endl;
+            std::cout << "driver=" << DBAssetsDiscovery::get_config_driver_from_info(*it_config_info_list) << std::endl;
+            std::cout << "port=" << DBAssetsDiscovery::get_config_port_from_info(*it_config_info_list) << std::endl;
+            std::map<std::string, std::string> key_value_list = DBAssetsDiscovery::get_config_default_key_value_list_from_info(*it_config_info_list);
+            auto it_key_value_list = key_value_list.begin();
+            while (it_key_value_list != key_value_list.end() && it_key_value_list != key_value_list.end()) {
+                std::cout << "  " << it_key_value_list->first << "=" << it_key_value_list->second << std::endl;
+                it_key_value_list ++;
+            }
+            std::vector<std::string> document_type_list = DBAssetsDiscovery::get_config_document_type_list_from_info(*it_config_info_list);
+            auto it_document_type_list = document_type_list.begin();
+            while (it_document_type_list != document_type_list.end() && it_document_type_list != document_type_list.end()) {
+                std::cout << *it_document_type_list << std::endl;
+                it_document_type_list ++;
+            }
+            it_config_info_list ++;
+        }
     }
 
     // Remove data previously added in database
