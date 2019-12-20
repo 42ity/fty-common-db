@@ -33,10 +33,8 @@
 #include <iostream>
 
 #ifdef __cplusplus
-namespace DBAssetsDiscovery {
 
-#define REQUEST_WHERE_CANDIDATE_CONFIG " WHERE config.id_asset_element = :asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE"
-#define REQUEST_WHERE_ALL_CONFIG       " WHERE config.id_asset_element =: asset_id"
+namespace DBAssetsDiscovery {
 
 using DeviceConfigurationId  = std::pair<std::string, nutcommon::DeviceConfiguration>;
 using DeviceConfigurationIds = std::vector<DeviceConfigurationId>;
@@ -46,26 +44,41 @@ struct DeviceConfigurationType {
     std::string prettyName;
     nutcommon::DeviceConfiguration defaultAttributes;
     std::set<std::string> secwDocumentTypes;
-} ;
+};
 
-typedef std::vector<DeviceConfigurationType> DeviceConfigurationTypes;
+using DeviceConfigurationTypes = std::vector<DeviceConfigurationType>;
+
+#if 0
+/**
+ * @function get_candidate_config Get first candidate configuration of an asset
+ * @param conn The connection to the database
+ * @param asset_name The asset name to get configuration
+ * @param config_id [out] The return configuration id
+ * @param device_config [out] The return configuration of the asset
+ * @return {integer} 0 if no error else < 0
+ */
+int get_candidate_config (tntdb::Connection& conn, const std::string& asset_name, std::string &config_id, nutcommon::DeviceConfiguration& device_config)
+#endif
 
 /**
- * @function get_candidate_config_list Get all candidate configurations of an asset
- * @param asset_name The asset name to get configurations
+ * @function get_candidate_config_list Get candidate configuration list of an asset
+ * @param conn The connection to the database
+ * @param asset_name The asset name to get configuration
  * @return The return configuration list of the asset
  */
 DeviceConfigurationIds get_candidate_config_list (tntdb::Connection& conn, const std::string& asset_name);
 
 /**
- * @function get_all_config_list Get all configurations of an asset
+ * @function get_all_config_list Get all configuration list of an asset
+ * @param conn The connection to the database
  * @param asset_name The asset name to get configuration
  * @return The return configuration list of the asset
  */
-DeviceConfigurationIds get_all_candidate_config_list (tntdb::Connection& conn, const std::string& asset_name);
+DeviceConfigurationIds get_all_config_list (tntdb::Connection& conn, const std::string& asset_name);
 
 /**
- * @function get_config_working Get working value of a configuration
+ * @function is_config_working Get working value of a configuration
+ * @param conn The connection to the database
  * @param config_id The configuration id
  * @return The return working value
  */
@@ -73,13 +86,15 @@ bool is_config_working (tntdb::Connection& conn, const std::string& config_id);
 
 /**
  * @function set_config_working Change working value of a configuration
+ * @param conn The connection to the database
  * @param config_id The configuration id
  * @param working_value The new working value
  */
-void set_config_working (tntdb::Connection& conn, const std::string& config_id);
+void set_config_working (tntdb::Connection& conn, const std::string& config_id, const bool working_value);
 
 /**
  * @function modify_config_priorities Change priorities of configuration list for an asset
+ * @param conn The connection to the database
  * @param asset_name The asset name to change priorities of configuration list
  * @param configuration_id_list The list of configuration for priorities (first in the list is the highest priority)
  */
@@ -87,19 +102,29 @@ void modify_config_priorities (tntdb::Connection& conn, const std::string& asset
 
 /**
  * @function insert_config Insert a new configuration for an asset
+ * @param conn The connection to the database
  * @param asset_name The asset name to add  new configuration
  * @param is_working Value of is_working attribute
  * @param is_enabled Value of is_enabled attribute
  * @param key_value_asset_list The list of key values to add in the asset configuration attribute table
  * @return Configuration id in database.
  */
-size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, size_t config_type, bool is_working, bool is_enabled, const nutcommon::DeviceConfiguration& key_value_asset_list);
-
+size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, const size_t config_type,
+                      const bool is_working, const bool is_enabled,
+                      const nutcommon::DeviceConfiguration& key_value_asset_list);
 /**
  * @function remove_config Remove a configuration from database
+ * @param conn The connection to the database
  * @param config_id The configuration id to remove
  */
-void remove_config (tntdb::Connection& conn, int config_id);
+void remove_config (tntdb::Connection& conn, const size_t config_id);
+
+/**
+ * @function get_all_configuration_types Get specific configuration information for each configuration type
+ * @param conn The connection to the database
+ * @return the specific configuration information for each configuration type
+ */
+DeviceConfigurationTypes get_all_configuration_types (tntdb::Connection& conn);
 
 } // namespace
 
