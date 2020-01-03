@@ -13,6 +13,7 @@ git clone --quiet --depth 1 https://github.com/42ity/cxxtools.git cxxtools
 git clone --quiet --depth 1 https://github.com/42ity/tntdb.git tntdb
 git clone --quiet --depth 1 https://github.com/42ity/fty-common-logging.git fty-common-logging
 git clone --quiet --depth 1 https://github.com/42ity/fty-common.git fty-common
+git clone --quiet --depth 1 https://github.com/42ity/fty-common-nut.git fty-common-nut
 git clone --quiet --depth 1 -b stable https://github.com/42ity/libsodium.git libsodium
 git clone --quiet --depth 1 https://github.com/42ity/libzmq.git libzmq
 git clone --quiet --depth 1 https://github.com/42ity/czmq.git czmq

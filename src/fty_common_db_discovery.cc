@@ -28,9 +28,9 @@
 
 #include "fty_common_db_classes.h"
 #include <fty_common_macros.h>
-
 #include <fty_common.h>
 #include <fty_common_nut_utils.h>
+#include <fty_common_nut_credentials.h>
 
 #include <assert.h>
 
@@ -183,23 +183,26 @@ int get_candidate_config (tntdb::Connection& conn, const std::string& asset_name
  * @param asset_id The asset id to get configuration
  * @return The return configuration list of the asset
  */
-static DeviceConfigurationIds request_database_config_list (tntdb::Connection& conn, const std::string& request, const uint64_t asset_id)
+static DeviceConfigurationInfos request_database_config_list (tntdb::Connection& conn, const std::string& request, const uint64_t asset_id)
 {
-    DeviceConfigurationIds device_config_id_list;
+    DeviceConfigurationInfos device_config_id_list;
 
     tntdb::Statement st = conn.prepareCached(request);
     tntdb::Result res = st.set("asset_id", asset_id).select();
-    std::string config_id_in_progress;
+    size_t config_id_in_progress = -1;
     nutcommon::DeviceConfiguration config;
     for (auto &row: res) {
-        std::string config_id;
+        size_t config_id = -1;
         row["id_nut_configuration"].get(config_id);
-        if (config_id_in_progress.empty()) {
+        if (config_id_in_progress == -1) {
             config_id_in_progress = config_id;
         }
         if (config_id_in_progress != config_id) {
             if (!config.empty()) {
-                device_config_id_list.push_back(std::make_pair(config_id_in_progress, config));
+                DeviceConfigurationInfo config_info;
+                config_info.id = config_id_in_progress;
+                config_info.attributes = config;
+                device_config_id_list.emplace_back(config_info);
             }
             config.erase(config.begin(), config.end());
             config_id_in_progress = config_id;
@@ -212,7 +215,10 @@ static DeviceConfigurationIds request_database_config_list (tntdb::Connection& c
         config.insert(std::make_pair(keytag.c_str(), value.c_str()));
     }
     if (!config.empty()) {
-        device_config_id_list.push_back(std::make_pair(config_id_in_progress, config));
+        DeviceConfigurationInfo config_info;
+        config_info.id = config_id_in_progress;
+        config_info.attributes = config;
+        device_config_id_list.emplace_back(config_info);
     }
 
     return device_config_id_list;
@@ -225,9 +231,9 @@ static DeviceConfigurationIds request_database_config_list (tntdb::Connection& c
  * @param asset_name The asset name to get configuration
  * @return The return configuration list of the asset
  */
-static DeviceConfigurationIds get_config_list (tntdb::Connection& conn, const std::string& request_where, const std::string& asset_name)
+static DeviceConfigurationInfos get_config_list (tntdb::Connection& conn, const std::string& request_where, const std::string& asset_name)
 {
-    DeviceConfigurationIds device_config_id_list;
+    DeviceConfigurationInfos device_config_id_list;
 
     const uint64_t asset_id = get_asset_id(conn, asset_name);
 
@@ -239,7 +245,7 @@ static DeviceConfigurationIds get_config_list (tntdb::Connection& conn, const st
     request += request_where;
     request += " ORDER BY config.priority ASC, config.id_nut_configuration";
 
-    DeviceConfigurationIds default_config_id_list = request_database_config_list(conn, request, asset_id);
+    DeviceConfigurationInfos default_config_id_list = request_database_config_list(conn, request, asset_id);
 
     // Then get asset configurations
     request = " SELECT config.id_nut_configuration, conf_attr.keytag, conf_attr.value"
@@ -249,34 +255,63 @@ static DeviceConfigurationIds get_config_list (tntdb::Connection& conn, const st
     request += request_where;
     request += " ORDER BY config.priority ASC, config.id_nut_configuration";
 
-    DeviceConfigurationIds asset_config_id_list = request_database_config_list(conn, request, asset_id);
+    DeviceConfigurationInfos asset_config_id_list = request_database_config_list(conn, request, asset_id);
 
     // Save first part of result
     auto it_default_config_id_list = default_config_id_list.begin();
     while (it_default_config_id_list != default_config_id_list.end()) {
-        nutcommon::DeviceConfiguration config;
-        std::string config_id = (*it_default_config_id_list).first;
-        config.insert((*it_default_config_id_list).second.begin(), (*it_default_config_id_list).second.end());
-        device_config_id_list.push_back(std::make_pair(config_id, config));
+        DeviceConfigurationInfo config_info;
+        config_info.id = (*it_default_config_id_list).id;
+        config_info.attributes.insert((*it_default_config_id_list).attributes.begin(), (*it_default_config_id_list).attributes.end());
+        device_config_id_list.emplace_back(config_info);
         it_default_config_id_list ++;
     }
 
     // Merge asset config to default config:
     auto it_asset_config_id_list = asset_config_id_list.begin();
-    auto it_config_id_list = device_config_id_list.begin();
-    while (it_asset_config_id_list != asset_config_id_list.end() && it_config_id_list != device_config_id_list.end()) {
-        std::string config_id = (*it_config_id_list).first;
-        if (config_id == (*it_asset_config_id_list).first) {
+    while (it_asset_config_id_list != asset_config_id_list.end()) {
+        size_t config_id = (*it_asset_config_id_list).id;
+        auto it_config_id_list = std::find_if(device_config_id_list.begin(), device_config_id_list.end(),
+            [&config_id](const DeviceConfigurationInfo& val){ return val.id == config_id; });
+        // If config id not found
+        if (it_config_id_list == device_config_id_list.end()) {
+            // - insert new elements from asset config
+            DeviceConfigurationInfo config_info;
+            config_info.id = config_id;
+            config_info.attributes.insert((*it_asset_config_id_list).attributes.begin(), (*it_asset_config_id_list).attributes.end());
+            device_config_id_list.emplace_back(config_info);
+        }
+        // else config id has been found
+        else {
             // - first add new elements from asset config if not present in default config
-            (*it_config_id_list).second.insert((*it_asset_config_id_list).second.begin(), (*it_asset_config_id_list).second.end());
+            (*it_config_id_list).attributes.insert((*it_asset_config_id_list).attributes.begin(), (*it_asset_config_id_list).attributes.end());
             // - then update default element value with asset config value if their keys are identical
-            for(auto& it : (*it_asset_config_id_list).second) {
-                (*it_config_id_list).second[it.first] = it.second;
+            for(auto& it : (*it_asset_config_id_list).attributes) {
+                (*it_config_id_list).attributes[it.first] = it.second;
             }
         }
         it_asset_config_id_list ++;
-        it_config_id_list ++;
     }
+
+    // Get all secw document id for each configuration
+    auto it_device_config_id_list = device_config_id_list.begin();
+    while (it_device_config_id_list != device_config_id_list.end()) {
+        std::set<std::string> document_type_list;
+        tntdb::Statement st = conn.prepareCached(
+            " SELECT BIN_TO_UUID(id_secw_document)"
+            " FROM"
+            "   t_bios_nut_configuration_secw_document"
+            " WHERE id_nut_configuration = :id_nut_configuration"
+        );
+        tntdb::Result result = st.set("id_nut_configuration", (*it_device_config_id_list).id).select();
+        for (auto &row: result) {
+            std::string id_secw_document;
+            row["BIN_TO_UUID(id_secw_document)"].get(id_secw_document);
+            (*it_device_config_id_list).secwDocumentIdList.insert(id_secw_document);
+        }
+        it_device_config_id_list ++;
+    }
+
     return device_config_id_list;
 }
 
@@ -286,7 +321,7 @@ static DeviceConfigurationIds get_config_list (tntdb::Connection& conn, const st
  * @param asset_name The asset name to get configuration
  * @return The return configuration list of the asset
  */
-DeviceConfigurationIds get_candidate_config_list (tntdb::Connection& conn, const std::string& asset_name)
+DeviceConfigurationInfos get_candidate_config_list (tntdb::Connection& conn, const std::string& asset_name)
 {
     const std::string request_where = " WHERE config.id_asset_element = :asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE";
     return get_config_list(conn, request_where, asset_name);
@@ -298,8 +333,31 @@ DeviceConfigurationIds get_candidate_config_list (tntdb::Connection& conn, const
  * @param asset_name The asset name to get configuration
  * @return The return configuration list of the asset
  */
-DeviceConfigurationIds get_all_config_list (tntdb::Connection& conn, const std::string& asset_name)
+DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std::string& asset_name)
 {
+// TBD: WORKAROUND SECURE DOCUMENT NOT INITIALISED - TO REMOVE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#if 1
+    auto credentialsSNMPv1 = nutcommon::getCredentialsSNMPv1();
+    auto credentialsSNMPv3 = nutcommon::getCredentialsSNMPv3();
+
+    for (auto it = credentialsSNMPv1.begin(); it != credentialsSNMPv1.end(); it ++) {
+        tntdb::Statement st = conn.prepareCached(
+            " INSERT IGNORE INTO t_bios_secw_document"
+            " (id_secw_document, id_secw_document_type)"
+            " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
+        );
+        st.set("id_secw_document", it->document_id).execute();
+    }
+    for (auto it = credentialsSNMPv3.begin(); it != credentialsSNMPv3.end(); it ++) {
+        tntdb::Statement st = conn.prepareCached(
+            " INSERT IGNORE INTO t_bios_secw_document"
+            " (id_secw_document, id_secw_document_type)"
+            " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
+        );
+        st.set("id_secw_document", it->document_id).execute();
+    }
+#endif
+
     const std::string request_where = " WHERE config.id_asset_element =: asset_id";
     return get_config_list(conn, request_where, asset_name);
 }
@@ -310,7 +368,7 @@ DeviceConfigurationIds get_all_config_list (tntdb::Connection& conn, const std::
  * @param config_id The configuration id
  * @return The return working value
  */
-bool is_config_working (tntdb::Connection& conn, const std::string& config_id)
+bool is_config_working (tntdb::Connection& conn, const size_t config_id)
 {
     bool working_value;
     tntdb::Statement st = conn.prepareCached(
@@ -331,7 +389,7 @@ bool is_config_working (tntdb::Connection& conn, const std::string& config_id)
  * @param config_id The configuration id
  * @param working_value The new working value
  */
-void set_config_working (tntdb::Connection& conn, const std::string& config_id, const bool working_value)
+void set_config_working (tntdb::Connection& conn, const size_t config_id, const bool working_value)
 {
     tntdb::Statement st = conn.prepareCached(
         " UPDATE"
@@ -418,14 +476,16 @@ void modify_config_priorities (tntdb::Connection& conn, const std::string& asset
 /**
  * @function insert_config Insert a new configuration for an asset
  * @param conn The connection to the database
- * @param asset_name The asset name to add  new configuration
+ * @param asset_name The asset name to add new configuration
  * @param is_working Value of is_working attribute
  * @param is_enabled Value of is_enabled attribute
+ * @param secw_document_id_list Security document id list of new configuration
  * @param key_value_asset_list The list of key values to add in the asset configuration attribute table
  * @return Configuration id in database.
  */
 size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, const size_t config_type,
                       const bool is_working, const bool is_enabled,
+                      const std::set<secw::Id>& secw_document_id_list,
                       const nutcommon::DeviceConfiguration& key_value_asset_list)
 {
     const uint64_t asset_id = get_asset_id(conn, asset_name);
@@ -433,8 +493,7 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
     // Get max priority
     tntdb::Statement st = conn.prepareCached(
         " SELECT MAX(priority)"
-        " FROM"
-        "   t_bios_nut_configuration"
+        " FROM t_bios_nut_configuration"
         " WHERE id_asset_element = :asset_id"
     );
     tntdb::Row row = st.set("asset_id", asset_id).selectRow();
@@ -445,7 +504,7 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
     st = conn.prepareCached(
         " INSERT INTO t_bios_nut_configuration"
         " (id_nut_configuration_type, id_asset_element, priority, is_enabled, is_working)"
-        " VALUES "
+        " VALUES"
         " (:config_type, :asset_id, :priority, :is_enabled, :is_working)"
     );
     st.set("config_type", config_type).
@@ -461,29 +520,53 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
         throw std::runtime_error(ss.str());
     }
 
+    // Insert document id list in configuration security wallet
+    if (secw_document_id_list.size() > 0) {
+        std::ostringstream s;
+        s << " INSERT INTO t_bios_nut_configuration_secw_document"
+          << " (id_nut_configuration, id_secw_document)"
+          << " VALUES";
+        int nb;
+        for (nb = 0; nb < secw_document_id_list.size() - 1; nb ++) {
+            s << " (:config_id, UUID_TO_BIN(:id_secw_document_" << nb << ")),";
+        }
+        s << " (:config_id, UUID_TO_BIN(:id_secw_document_" << nb << "))";
+        st = conn.prepareCached(s.str());
+        st = st.set("config_id", config_id);
+        nb = 0;
+        for (auto it = secw_document_id_list.begin(); it != secw_document_id_list.end(); ++it) {
+            s.str("");
+            s << "id_secw_document_" << nb ++;
+            st = st.set(s.str(), *it);
+        }
+        st.execute();
+    }
+
     // Insert the list of key values in the asset configuration attribute table
-    std::ostringstream s;
-    s << " INSERT IGNORE INTO t_bios_nut_configuration_attribute"
-        << " (id_nut_configuration, keytag, value)"
-        << " VALUES";
-    int nb;
-    for (nb = 0; nb < key_value_asset_list.size() - 1; nb ++) {
-        s << " (:config_id, :key_" << nb << ", :value_" << nb << "),";
+    if (key_value_asset_list.size() > 0) {
+        std::ostringstream s;
+        s << " INSERT IGNORE INTO t_bios_nut_configuration_attribute"
+          << " (id_nut_configuration, keytag, value)"
+          << " VALUES";
+        int nb;
+        for (nb = 0; nb < key_value_asset_list.size() - 1; nb ++) {
+            s << " (:config_id, :key_" << nb << ", :value_" << nb << "),";
+        }
+        s << " (:config_id, :key_" << nb << ", :value_" << nb << ")";
+        st = conn.prepareCached(s.str());
+        st = st.set("config_id", config_id);
+        nb = 0;
+        for (auto it = key_value_asset_list.begin(); it != key_value_asset_list.end(); ++it) {
+            s.str("");
+            s << "key_" << nb;
+            st = st.set(s.str(), it->first);
+            s.str("");
+            s << "value_" << nb;
+            st = st.set(s.str(), it->second);
+            nb ++;
+        }
+        st.execute();
     }
-    s << " (:config_id, :key_" << nb << ", :value_" << nb << ")";
-    st = conn.prepareCached(s.str());
-    st = st.set("config_id", config_id);
-    nb = 0;
-    for (auto it = key_value_asset_list.begin(); it != key_value_asset_list.end(); ++it) {
-        s.str("");
-        s << "key_" << nb;
-        st = st.set(s.str(), it->first);
-        s.str("");
-        s << "value_" << nb;
-        st = st.set(s.str(), it->second);
-        nb ++;
-    }
-    st.execute();
     return config_id;
 }
 
@@ -531,9 +614,9 @@ void remove_config (tntdb::Connection& conn, const size_t config_id)
  * @param conn The connection to the database
  * @return the specific configuration information for each configuration type
  */
-DeviceConfigurationTypes get_all_configuration_types (tntdb::Connection& conn)
+DeviceConfigurationInfoDetails get_all_configuration_types (tntdb::Connection& conn)
 {
-    DeviceConfigurationTypes config_info_list;
+    DeviceConfigurationInfoDetails config_info_list;
 
     // Get all configuration type
     tntdb::Statement st = conn.prepareCached(
@@ -585,7 +668,7 @@ DeviceConfigurationTypes get_all_configuration_types (tntdb::Connection& conn)
             row2["id_secw_document_type"].get(document_type);
             document_type_list.insert(document_type);
         }
-        DeviceConfigurationType config_info;
+        DeviceConfigurationInfoDetail config_info;
         config_info.id = config_type;
         config_info.prettyName = config_name;
         config_info.defaultAttributes = default_values_list;
@@ -1001,7 +1084,7 @@ void fty_common_db_discovery_test (bool verbose)
 
         // Test get_candidate_config_list function
         {
-            DBAssetsDiscovery::DeviceConfigurationIds device_config_id_list;
+            DBAssetsDiscovery::DeviceConfigurationInfos device_config_id_list;
             std::cout << "\nTest get_candidate_configs for " << t_asset_name[i] << ":" << std::endl;
             device_config_id_list = DBAssetsDiscovery::get_candidate_config_list(conn, t_asset_name[i]);
             assert(test_results[t_asset_name[i]].size() == device_config_id_list.size());
@@ -1011,9 +1094,9 @@ void fty_common_db_discovery_test (bool verbose)
             while (it_config != device_config_id_list.end() && it_config_res != test_results[t_asset_name[i]].end()) {
                 if (nb_config ++ != 0) std::cout << "<<<<<<<<<<<<" <<  std::endl;
                 std::map<std::string, std::string> key_value_res = *it_config_res;
-                assert(key_value_res.size() == (*it_config).second.size());
-                auto it = (*it_config).second.begin();
-                while (it != (*it_config).second.end()) {
+                assert(key_value_res.size() == (*it_config).attributes.size());
+                auto it = (*it_config).attributes.begin();
+                while (it != (*it_config).attributes.end()) {
                     std::cout << "[" << it->first << "] = " << it->second << std::endl;
                     assert(key_value_res.at(it->first) == it->second);
                     it ++;
@@ -1025,7 +1108,7 @@ void fty_common_db_discovery_test (bool verbose)
 
         // Test get_all_config_list function
         {
-            DBAssetsDiscovery::DeviceConfigurationIds device_config_id_list;
+            DBAssetsDiscovery::DeviceConfigurationInfos device_config_id_list;
             std::cout << "\nTest get_candidate_configs for " << t_asset_name[i] << ":" << std::endl;
             device_config_id_list = DBAssetsDiscovery::get_all_config_list(conn, t_asset_name[i]);
             std::cout << "size=" << device_config_id_list.size() << std::endl;
@@ -1036,7 +1119,7 @@ void fty_common_db_discovery_test (bool verbose)
     // Test get/set functions for configuration working value
     {
         bool value, initial_value;
-        std::string config_id = "1";
+        size_t config_id = 1;
         // Get initial value
         initial_value = DBAssetsDiscovery::is_config_working(conn, config_id);
         // Change current value
@@ -1101,12 +1184,15 @@ void fty_common_db_discovery_test (bool verbose)
         }
     }
 
-    // Test insert_config function
+    // Test insert_config and remove_config function
     {
         std::map<std::string, std::string> key_value_asset_list = {{ "Key1", "Val1"}, { "Key2", "Val2"}, { "Key3", "Val3"}};
+        std::set<secw::Id> secw_document_id_list = {{ "11111111-1111-1111-1111-000000000001" }};
         int config_type = 1;
         // Insert new config
-        size_t config_id = DBAssetsDiscovery::insert_config(conn, "ups-1", config_type, true, true, key_value_asset_list);
+        size_t config_id = DBAssetsDiscovery::insert_config(conn, "ups-1", config_type,
+            true, true, secw_document_id_list, key_value_asset_list);
+        assert(config_id > 0);
         // Remove inserted config
         DBAssetsDiscovery::remove_config(conn, config_id);
     }

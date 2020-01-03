@@ -497,6 +497,90 @@ dnl END of PKG_CHECK_MODULES and/or direct tests for libfty_common
 dnl END of enabled attempts to search for libfty_common
 
 
+was_fty_common_nut_check_lib_detected=no
+
+search_libfty_common_nut="yes"
+
+AC_ARG_WITH([libfty_common_nut],
+    [
+        AS_HELP_STRING([--with-libfty_common_nut],
+        [yes or no. Optionally specify libfty_common_nut prefix (directory where its include/ and lib/ are located), but that is only used if pkgconfig metadata is not found first])
+    ],
+    [
+        search_libfty_common_nut="yes"
+    ],
+    [
+        search_libfty_common_nut="yes"
+    ])
+AS_CASE([x"${with_libfty_common_nut}"],
+    [xyes], [search_libfty_common_nut="yes"],
+    [xno],  [search_libfty_common_nut="no"])
+
+dnl We do not abort right now, because the maintainer/developer may have
+dnl something particular in mind, e.g. to build just parts of a project.
+AS_IF([test x"${search_libfty_common_nut}" = xno],
+    [AC_MSG_WARN([Required dependency on fty_common_nut was explicitly disabled during configuration by '--with-libfty_common_nut=no'; subsequent full build of fty-common-db may fail])])
+
+AS_IF([test x"${search_libfty_common_nut}" = xyes], [
+    # Archive previously detected and supplied flags
+    PRE_SEARCH_CFLAGS="${CFLAGS}"
+    PRE_SEARCH_LIBS="${LIBS}"
+
+    found_pkgconfig=""
+    PKG_CHECK_MODULES([fty_common_nut], [libfty_common_nut >= 0.0.0],
+    [
+        was_fty_common_nut_check_lib_detected=pkgcfg
+        found_pkgconfig="libfty_common_nut"
+    ],
+    [
+        AC_MSG_NOTICE([Package libfty_common_nut not found; falling back to defined compilability tests])
+
+        fty_common_nut_synthetic_cflags=""
+        fty_common_nut_synthetic_libs="-lfty-common-nut"
+
+        if test -n "${with_libfty_common_nut}" && test x"${with_libfty_common_nut}" != xyes && test x"${with_libfty_common_nut}" != xno; then
+            if test -r "${with_libfty_common_nut}/include/fty_common_nut.h"; then
+                fty_common_nut_synthetic_cflags="-I${with_libfty_common_nut}/include"
+                fty_common_nut_synthetic_libs="-L${with_libfty_common_nut}/lib -lfty-common-nut"
+            else
+            AC_MSG_ERROR([Header file ${with_libfty_common_nut}/include/fty_common_nut.h was not found. Please check libfty_common_nut prefix])
+            fi
+        else
+            AC_CHECK_HEADER([fty_common_nut.h], [],
+            AC_MSG_ERROR([Header file fty_common_nut.h was not found in default search paths])
+                )
+        fi
+
+        AC_CHECK_LIB([fty-common-nut], [fty_common_nut_selftest],
+            [
+                was_fty_common_nut_check_lib_detected=yes
+                PKGCFG_LIBS_PRIVATE="$PKGCFG_LIBS_PRIVATE -lfty-common-nut"
+            ],
+            [AC_MSG_ERROR([cannot link with -lfty-common-nut, install libfty_common_nut])])
+    ])
+
+dnl END of PKG_CHECK_MODULES and/or direct tests for libfty_common_nut
+    AS_CASE(["x${was_fty_common_nut_check_lib_detected}"],
+        [xpkgcfg], [
+                PKGCFG_NAMES_PRIVATE="$PKGCFG_NAMES_PRIVATE ${found_pkgconfig}"
+                CFLAGS="${fty_common_nut_CFLAGS} ${CFLAGS}"
+                LIBS="${fty_common_nut_LIBS} ${LIBS}"
+            ],
+        [xyes], [
+                CFLAGS="${fty_common_nut_synthetic_cflags} ${CFLAGS}"
+                LDFLAGS="${fty_common_nut_synthetic_libs} ${LDFLAGS}"
+                LIBS="${fty_common_nut_synthetic_libs} ${LIBS}"
+
+                AC_SUBST([fty_common_nut_CFLAGS],[${fty_common_nut_synthetic_cflags}])
+                AC_SUBST([fty_common_nut_LIBS],[${fty_common_nut_synthetic_libs}])
+            ],
+        [xno], [
+            AC_MSG_ERROR([Cannot find pkg-config metadata for libfty_common_nut 0.0.0 or higher])
+    ])
+])
+dnl END of enabled attempts to search for libfty_common_nut
+
+
 was_libsodium_check_lib_detected=no
 
 search_libsodium="yes"
@@ -1003,32 +1087,22 @@ AS_IF([test "x$enable_Werror" = "xyes" || test "x$enable_Werror" = "xauto"],
     [AS_IF([test -n "$CC"],[AS_IF([$CC --version 2>&1 | grep 'Free Software Foundation' > /dev/null && test "x$GCC" = "xyes"],
         [AC_MSG_NOTICE([Enabling pedantic errors for GNU C])
          CFLAGS="$CFLAGS -pedantic -Wall -Werror -Werror=format-security"],
-        [AS_IF([$CC --version 2>&1 | grep 'clang version' > /dev/null],
-            [AC_MSG_NOTICE([Enabling pedantic errors for clang C])
-             CFLAGS="$CFLAGS -pedantic -Wall -Werror -Werror=format-security"],
-            [AC_MSG_NOTICE([Not enabling pedantic errors: compiler not supported by this recipe (not GNU or clang C)])
-             AS_IF([test "x$enable_Werror" = "xyes"], [AC_MSG_ERROR([--enable-Werror=yes was requested and can not be satisfied for C: $CC])])
-        ])])])
+        [AC_MSG_NOTICE([Not enabling pedantic errors: compiler not supported by this recipe (not GNU C)])
+         AS_IF([test "x$enable_Werror" = "xyes"], [AC_MSG_ERROR([--enable-Werror=yes was requested and can not be satisfied for C: $CC])])
+        ])])
      AS_IF([test -n "$CXX"],[AS_IF([$CXX --version 2>&1 | grep 'Free Software Foundation' > /dev/null && test "x$GCC" = "xyes"],
         [AC_MSG_NOTICE([Enabling pedantic errors for GNU C++])
          CXXFLAGS="$CXXFLAGS -pedantic -Wall -Werror -Werror=format-security"],
-        [AS_IF([$CXX --version 2>&1 | grep 'clang version' > /dev/null],
-            [AC_MSG_NOTICE([Enabling pedantic errors for clang C++])
-             CXXFLAGS="$CXXFLAGS -pedantic -Wall -Werror -Werror=format-security"],
-            [AC_MSG_NOTICE([Not enabling pedantic errors: compiler not supported by this recipe (not GNU or clang C++)])
-             AS_IF([test "x$enable_Werror" = "xyes"], [AC_MSG_ERROR([--enable-Werror=yes was requested and can not be satisfied for C++: $CXX])])
-        ])])])
+        [AC_MSG_NOTICE([Not enabling pedantic errors: compiler not supported by this recipe (not GNU C++)])
+         AS_IF([test "x$enable_Werror" = "xyes"], [AC_MSG_ERROR([--enable-Werror=yes was requested and can not be satisfied for C++: $CXX])])
+        ])])
      AS_IF([test -n "$CPP"],[AS_IF([$CPP --version 2>&1 | grep 'Free Software Foundation' > /dev/null && test "x$GCC" = "xyes"],
         [AC_MSG_NOTICE([Enabling pedantic errors for GNU CPP preprocessor])
          CPPFLAGS="$CPPFLAGS -pedantic -Werror -Wall"
         ],
-        [AS_IF([$CXX --version 2>&1 | grep 'clang version' > /dev/null],
-            [AC_MSG_NOTICE([Enabling pedantic errors for clang CPP preprocessor])
-             CPPFLAGS="$CPPFLAGS -pedantic -Werror -Wall"
-            ],
-            [AC_MSG_NOTICE([Not enabling pedantic errors: preprocessor not supported by this recipe (not GNU or clang CPP)])
-             AS_IF([test "x$enable_Werror" = "xyes"], [AC_MSG_ERROR([--enable-Werror=yes was requested and can not be satisfied for CPP: $CPP])])
-        ])])])
+        [AC_MSG_NOTICE([Not enabling pedantic errors: preprocessor not supported by this recipe (not GNU CPP)])
+         AS_IF([test "x$enable_Werror" = "xyes"], [AC_MSG_ERROR([--enable-Werror=yes was requested and can not be satisfied for CPP: $CPP])])
+        ])])
 ])
 
 # Specify output files
@@ -1036,7 +1110,7 @@ AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  include/Makefile
                  src/libfty_common_db.pc
-                ])
+                 ])
 
 
 AC_OUTPUT
