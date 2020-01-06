@@ -346,7 +346,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
             " (id_secw_document, id_secw_document_type)"
             " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
         );
-        st.set("id_secw_document", it->document_id).execute();
+        st.set("id_secw_document", it->documentId).execute();
     }
     for (auto it = credentialsSNMPv3.begin(); it != credentialsSNMPv3.end(); it ++) {
         tntdb::Statement st = conn.prepareCached(
@@ -354,7 +354,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
             " (id_secw_document, id_secw_document_type)"
             " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
         );
-        st.set("id_secw_document", it->document_id).execute();
+        st.set("id_secw_document", it->documentId).execute();
     }
 #endif
 
