@@ -238,12 +238,14 @@ static DeviceConfigurationInfos get_config_list (tntdb::Connection& conn, const 
     const uint64_t asset_id = get_asset_id(conn, asset_name);
 
     // Get first default configurations
-    std::string request = " SELECT config.id_nut_configuration, conf_def_attr.keytag, conf_def_attr.value"
+    std::string request = " SELECT config.id_nut_configuration as id_nut_configuration, conf_def_attr.keytag as keytag, conf_def_attr.value as value, config.priority as priority"
         " FROM t_bios_nut_configuration config"
         " INNER JOIN t_bios_nut_configuration_default_attribute conf_def_attr"
         " ON conf_def_attr.id_nut_configuration_type = config.id_nut_configuration_type";
     request += request_where;
-    request += " ORDER BY config.priority ASC, config.id_nut_configuration";
+    request += R"xxx( UNION SELECT config.id_nut_configuration as id_nut_configuration, "driver" as keytag, confType.driver as value, config.priority as priority FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config ON confType.id_nut_configuration_type = config.id_nut_configuration_type)xxx" + request_where;
+    request += R"xxx( UNION SELECT config.id_nut_configuration as id_nut_configuration, "port" as keytag, confType.port as value, config.priority as priority FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config ON confType.id_nut_configuration_type = config.id_nut_configuration_type)xxx" + request_where;
+    request += " ORDER BY priority ASC, id_nut_configuration";
 
     DeviceConfigurationInfos default_config_id_list = request_database_config_list(conn, request, asset_id);
 
