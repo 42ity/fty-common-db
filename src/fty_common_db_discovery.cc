@@ -710,12 +710,12 @@ int test_start_database (std::string test_working_dir)
     // Create selftest-rw if not exist
     buffer << "mkdir " << SELFTEST_DIR_RW;
     std::string command = buffer.str();
-    (void)system(command.c_str());
+    assert(system(command.c_str()) == 0);
     // Create working path for test
     buffer.str("");
     buffer << "mkdir " << run_working_path_test;
     command = buffer.str();
-    (void)system(command.c_str());
+    assert(system(command.c_str()) == 0);
     // Create shell script to execute
     buffer.str("");
     buffer << test_working_dir << "/" << "start_sql_server.sh";
@@ -740,7 +740,7 @@ int test_start_database (std::string test_working_dir)
     int ret = chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     // Execute the shell script
-    (void)system(file_path.c_str());
+    assert(system(file_path.c_str()) == 0);
 
     // Remove the shell script
     remove(file_path.c_str());
@@ -767,7 +767,7 @@ void test_stop_database (std::string test_working_dir)
     int ret = chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     // Execute the shell script
-    (void)system(file_path.c_str());
+    assert(system(file_path.c_str()) == 0);
 
     // Remove the shell script
     remove(file_path.c_str());
@@ -877,7 +877,7 @@ void fty_common_db_discovery_test (bool verbose)
 
     // Get current directory
     char current_working_dir[FILENAME_MAX];
-    (void)getcwd(current_working_dir, FILENAME_MAX);
+    assert(getcwd(current_working_dir, FILENAME_MAX) != nullptr);
     // Set working test directory
     std::stringstream buffer;
     buffer << current_working_dir << "/" << SELFTEST_DIR_RW;
