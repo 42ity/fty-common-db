@@ -70,12 +70,12 @@ static DeviceConfigurationInfos request_database_config_list (tntdb::Connection&
 
     tntdb::Statement st = conn.prepareCached(request);
     tntdb::Result res = st.set("asset_id", asset_id).select();
-    size_t config_id_in_progress = -1;
+    size_t config_id_in_progress = 0;
     nutcommon::DeviceConfiguration config;
     for (auto &row: res) {
-        size_t config_id = -1;
+        size_t config_id = 0;
         row["id_nut_configuration"].get(config_id);
-        if (config_id_in_progress == -1) {
+        if (config_id_in_progress == 0) {
             config_id_in_progress = config_id;
         }
         if (config_id_in_progress != config_id) {
@@ -357,7 +357,7 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
         s << " INSERT INTO t_bios_nut_configuration_secw_document"
           << " (id_nut_configuration, id_secw_document)"
           << " VALUES";
-        int nb;
+        uint nb;
         for (nb = 0; nb < secw_document_id_list.size() - 1; nb ++) {
             s << " (:config_id, UUID_TO_BIN(:id_secw_document_" << nb << ")),";
         }
@@ -379,7 +379,7 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
         s << " INSERT IGNORE INTO t_bios_nut_configuration_attribute"
           << " (id_nut_configuration, keytag, value)"
           << " VALUES";
-        int nb;
+        uint nb;
         for (nb = 0; nb < key_value_asset_list.size() - 1; nb ++) {
             s << " (:config_id, :key_" << nb << ", :value_" << nb << "),";
         }
@@ -511,7 +511,7 @@ DeviceConfigurationInfoDetails get_all_configuration_types (tntdb::Connection& c
 //std::string run_working_path_test("/var/run/fty_common_db_discovery");
 std::string run_working_path_test("/home/admin/fty_common_db_discovery");
 
-int test_start_database (std::string test_working_dir)
+void test_start_database (std::string test_working_dir)
 {
     int mysql_port = 30001;
 
@@ -546,7 +546,7 @@ int test_start_database (std::string test_working_dir)
     file.close();
 
     // Change the right of the shell script for execution
-    int ret = chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    assert(chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
 
     // Execute the shell script
     assert(system(file_path.c_str()) >= 0);
@@ -573,7 +573,7 @@ void test_stop_database (std::string test_working_dir)
     file.close();
 
     // Change the right of the shell script for execution
-    int ret = chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    assert(chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
 
     // Execute the shell script
     assert(system(file_path.c_str()) >= 0);
@@ -586,7 +586,7 @@ int test_op_table (tntdb::Connection& conn, std::string request_table)
 {
     try {
         tntdb::Statement st = conn.prepareCached(request_table);
-        uint64_t res = st.execute();
+        st.execute();
     }
     catch (const std::exception &e) {
         LOG_END_ABNORMAL(e);
@@ -637,7 +637,7 @@ void test_del_data_database (tntdb::Connection& conn)
 
 void fty_common_db_discovery_test (bool verbose)
 {
-    printf (" * fty_common_db_discovery: ");
+    printf (" * fty_common_db_discovery: verbose=%s\n", verbose ? "true" : "false");
 
     std::map<std::string, std::vector<std::map<std::string, std::string>>> test_results = {
         {
@@ -874,10 +874,7 @@ void fty_common_db_discovery_test (bool verbose)
     );
 
     int asset_id = -1;
-    int config_id = -1;
-    int config_type = -1;
 
-    int i = 0;
     // Test for each asset
     for (int i = 0; i < nb_assets; i ++) {
         asset_id = t_asset_id[i];
@@ -958,7 +955,7 @@ void fty_common_db_discovery_test (bool verbose)
         // Read and check result
         config_priority_list.erase(config_priority_list.begin(), config_priority_list.end());
         assert(test_get_priorities_base(conn, asset_id, config_priority_list) == 0);
-        int num_priority = 0;
+        uint num_priority = 0;
         auto it_config_priority_list = config_priority_list.begin();
         auto it_config_id_list = config_id_list.begin();
         while (it_config_priority_list != config_priority_list.end() && it_config_id_list != config_id_list.end()) {
