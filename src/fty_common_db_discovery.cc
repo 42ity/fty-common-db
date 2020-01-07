@@ -201,7 +201,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
  */
 bool is_config_working (tntdb::Connection& conn, const size_t config_id)
 {
-    bool working_value;
+    bool working_value = false;
     tntdb::Statement st = conn.prepareCached(
         " SELECT is_working"
         " FROM"
@@ -437,7 +437,7 @@ DeviceConfigurationInfoDetails get_all_configuration_types (tntdb::Connection& c
     );
     tntdb::Result result = st.select();
     for (auto &row: result) {
-        int config_type;
+        int config_type = 0;
         row["id_nut_configuration_type"].get(config_type);
         std::string config_name;
         row["configuration_name"].get(config_name);
@@ -607,8 +607,8 @@ int test_get_priorities_base (tntdb::Connection& conn, int asset_id, std::vector
         );
         tntdb::Result result = st.set("asset_id", asset_id).select();
         for (auto &row: result) {
-            size_t config_id;
-            size_t priority;
+            size_t config_id = 0;
+            size_t priority = 0;
             row["id_nut_configuration"].get(config_id);
             row["priority"].get(priority);
             configuration_id_list.push_back(std::make_pair(config_id, priority));
@@ -637,7 +637,7 @@ void test_del_data_database (tntdb::Connection& conn)
 
 void fty_common_db_discovery_test (bool verbose)
 {
-    printf (" * fty_common_db_discovery: verbose=%s\n", verbose ? "true" : "false");
+    printf (" * fty_common_db_discovery:\n");
 
     std::map<std::string, std::vector<std::map<std::string, std::string>>> test_results = {
         {
@@ -723,9 +723,8 @@ void fty_common_db_discovery_test (bool verbose)
     // Remove tables data if previous tests failed
     test_del_data_database(conn);
 
-    std::string t_asset_name[] = { "ups-1", "ups-2", "ups-3" };
-    int nb_assets = sizeof(t_asset_name) / sizeof(char *);
-    int64_t t_asset_id[nb_assets];
+    std::vector<std::string> t_asset_name = { "ups-1", "ups-2", "ups-3" };
+    std::vector<int64_t> t_asset_id;
 
     uint16_t element_type_id = 6;  // ups
     uint32_t parent_id = 1;  // rack
@@ -736,7 +735,7 @@ void fty_common_db_discovery_test (bool verbose)
     bool update = true;
     db_reply_t res;
     // Update assets in database
-    for (int i = 0; i < nb_assets; i ++) {
+    for (uint i = 0; i < t_asset_name.size(); i++) {
         res = DBAssetsInsert::insert_into_asset_element(
             conn,
             t_asset_name[i].c_str(),
@@ -749,7 +748,7 @@ void fty_common_db_discovery_test (bool verbose)
             update
         );
         assert(res.status == 1);
-        t_asset_id[i] = DBAssetsDiscovery::get_asset_id(conn, t_asset_name[i]);
+        t_asset_id.push_back(DBAssetsDiscovery::get_asset_id(conn, t_asset_name[i]));
     }
 
     // Data for table t_bios_secw_document_type
@@ -873,11 +872,9 @@ void fty_common_db_discovery_test (bool verbose)
         " (2, 'snmp_version', 'v3')")) == 0
     );
 
-    int asset_id = -1;
-
     // Test for each asset
-    for (int i = 0; i < nb_assets; i ++) {
-        asset_id = t_asset_id[i];
+    for (uint i = 0; i < t_asset_id.size(); i ++) {
+        int asset_id = t_asset_id[i];
         std::cout << "\n<<<<<<<<<<<<<<<<<<< Test with asset " << t_asset_name[i] << "/" << asset_id << ":" << std::endl;
 
         // Test get_candidate_config_list function
