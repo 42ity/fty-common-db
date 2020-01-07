@@ -238,22 +238,34 @@ static DeviceConfigurationInfos get_config_list (tntdb::Connection& conn, const 
     const uint64_t asset_id = get_asset_id(conn, asset_name);
 
     // Get first default configurations
-    std::string request = " SELECT config.id_nut_configuration as id_nut_configuration, conf_def_attr.keytag as keytag, conf_def_attr.value as value, config.priority as priority"
+    std::string request =
+        " SELECT config.id_nut_configuration as id_nut_configuration, conf_def_attr.keytag as keytag, conf_def_attr.value as value, config.priority as priority"
         " FROM t_bios_nut_configuration config"
         " INNER JOIN t_bios_nut_configuration_default_attribute conf_def_attr"
         " ON conf_def_attr.id_nut_configuration_type = config.id_nut_configuration_type";
     request += request_where;
-    request += R"xxx( UNION SELECT config.id_nut_configuration as id_nut_configuration, "driver" as keytag, confType.driver as value, config.priority as priority FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config ON confType.id_nut_configuration_type = config.id_nut_configuration_type)xxx" + request_where;
-    request += R"xxx( UNION SELECT config.id_nut_configuration as id_nut_configuration, "port" as keytag, confType.port as value, config.priority as priority FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config ON confType.id_nut_configuration_type = config.id_nut_configuration_type)xxx" + request_where;
-    request += " ORDER BY priority ASC, id_nut_configuration";
+    // with driver value
+    request +=
+        " UNION SELECT config.id_nut_configuration as id_nut_configuration, \"driver\" as keytag, confType.driver as value, config.priority as priority"
+        " FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config"
+        " ON confType.id_nut_configuration_type = config.id_nut_configuration_type";
+    request += request_where;
+    // with default port value
+    request +=
+        " UNION SELECT config.id_nut_configuration as id_nut_configuration, \"port\" as keytag, confType.port as value, config.priority as priority"
+        " FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config"
+        " ON confType.id_nut_configuration_type = config.id_nut_configuration_type";
+    request += request_where;
+    request +=
+        " ORDER BY priority ASC, id_nut_configuration";
 
     DeviceConfigurationInfos default_config_id_list = request_database_config_list(conn, request, asset_id);
 
     // Then get asset configurations
     request = " SELECT config.id_nut_configuration, conf_attr.keytag, conf_attr.value"
-        " FROM t_bios_nut_configuration config"
-        " INNER JOIN t_bios_nut_configuration_attribute conf_attr"
-        " ON conf_attr.id_nut_configuration = config.id_nut_configuration";
+              " FROM t_bios_nut_configuration config"
+              " INNER JOIN t_bios_nut_configuration_attribute conf_attr"
+              " ON conf_attr.id_nut_configuration = config.id_nut_configuration";
     request += request_where;
     request += " ORDER BY config.priority ASC, config.id_nut_configuration";
 
@@ -360,7 +372,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
     }
 #endif
 
-    const std::string request_where = " WHERE config.id_asset_element =: asset_id";
+    const std::string request_where = " WHERE config.id_asset_element = :asset_id";
     return get_config_list(conn, request_where, asset_name);
 }
 
@@ -710,12 +722,12 @@ int test_start_database (std::string test_working_dir)
     // Create selftest-rw if not exist
     buffer << "mkdir " << SELFTEST_DIR_RW;
     std::string command = buffer.str();
-    assert(system(command.c_str()) == 0);
+    assert(system(command.c_str()) >= 0);
     // Create working path for test
     buffer.str("");
     buffer << "mkdir " << run_working_path_test;
     command = buffer.str();
-    assert(system(command.c_str()) == 0);
+    assert(system(command.c_str()) >= 0);
     // Create shell script to execute
     buffer.str("");
     buffer << test_working_dir << "/" << "start_sql_server.sh";
@@ -740,7 +752,7 @@ int test_start_database (std::string test_working_dir)
     int ret = chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     // Execute the shell script
-    assert(system(file_path.c_str()) == 0);
+    assert(system(file_path.c_str()) >= 0);
 
     // Remove the shell script
     remove(file_path.c_str());
@@ -767,7 +779,7 @@ void test_stop_database (std::string test_working_dir)
     int ret = chmod(file_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     // Execute the shell script
-    assert(system(file_path.c_str()) == 0);
+    assert(system(file_path.c_str()) >= 0);
 
     // Remove the shell script
     remove(file_path.c_str());
@@ -835,15 +847,19 @@ void fty_common_db_discovery_test (bool verbose)
             "ups-1",
             {
                 {
+                    { "driver", "snmp-ups" },
                     { "mibs", "eaton_ups" },
                     { "pollfreq", "21" },
+                    { "port", "{asset.ip.1}:{asset.port.snmpv3:161}" },
                     { "snmp_retries", "201" },
                     { "snmp_version", "v3" },
                     { "synchronous", "yes" }
                 },
                 {
+                    { "driver", "snmp-ups" },
                     { "mibs", "eaton_ups" },
                     { "pollfreq", "11" },
+                    { "port", "{asset.ip.1}:{asset.port.snmpv1:161}" },
                     { "snmp_retries", "101" },
                     { "snmp_version", "v1" },
                     { "synchronous", "yes" }
@@ -854,8 +870,10 @@ void fty_common_db_discovery_test (bool verbose)
             "ups-2",
             {
                 {
+                    { "driver", "snmp-ups" },
                     { "mibs", "eaton_ups" },
                     { "pollfreq", "51" },
+                    { "port", "{asset.ip.1}:{asset.port.snmpv3:161}" },
                     { "snmp_retries", "501" },
                     { "snmp_version", "v3" },
                     { "synchronous", "yes" }
@@ -866,7 +884,9 @@ void fty_common_db_discovery_test (bool verbose)
             "ups-3",
             {
                 {
+                    { "driver", "xmlv3-ups" },
                     { "pollfreq", "91"},
+                    { "port", "http://{asset.ip.1}:{asset.port.http:80}" },
                     { "protocol", "{asset.protocol.http:http}" },
                     { "snmp_retries", "901" },
                     { "synchronous", "no" }
@@ -904,7 +924,7 @@ void fty_common_db_discovery_test (bool verbose)
     }
 
     // Remove tables data if previous tests failed
-    //test_del_data_database(conn);
+    test_del_data_database(conn);
 
     std::string t_asset_name[] = { "ups-1", "ups-2", "ups-3" };
     int nb_assets = sizeof(t_asset_name) / sizeof(char *);
