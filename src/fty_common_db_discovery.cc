@@ -114,79 +114,15 @@ static DeviceConfigurationInfos request_database_config_list (tntdb::Connection&
  */
 static DeviceConfigurationInfos get_config_list (tntdb::Connection& conn, const std::string& request_where, const std::string& asset_name)
 {
-    DeviceConfigurationInfos device_config_id_list;
-
     const uint64_t asset_id = get_asset_id(conn, asset_name);
 
-    // Get first default configurations
+    // Get attributes configurations according where request
     std::string request =
-        " SELECT config.id_nut_configuration as id_nut_configuration, conf_def_attr.keytag as keytag, conf_def_attr.value as value, config.priority as priority"
-        " FROM t_bios_nut_configuration config"
-        " INNER JOIN t_bios_nut_configuration_default_attribute conf_def_attr"
-        " ON conf_def_attr.id_nut_configuration_type = config.id_nut_configuration_type";
+        " SELECT id_nut_configuration, keytag, value, priority"
+        " FROM v_conf_attribute";
     request += request_where;
-    // with driver value
-    request +=
-        " UNION SELECT config.id_nut_configuration as id_nut_configuration, \"driver\" as keytag, confType.driver as value, config.priority as priority"
-        " FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config"
-        " ON confType.id_nut_configuration_type = config.id_nut_configuration_type";
-    request += request_where;
-    // with default port value
-    request +=
-        " UNION SELECT config.id_nut_configuration as id_nut_configuration, \"port\" as keytag, confType.port as value, config.priority as priority"
-        " FROM t_bios_nut_configuration_type confType JOIN t_bios_nut_configuration config"
-        " ON confType.id_nut_configuration_type = config.id_nut_configuration_type";
-    request += request_where;
-    request +=
-        " ORDER BY priority ASC, id_nut_configuration";
 
-    DeviceConfigurationInfos default_config_id_list = request_database_config_list(conn, request, asset_id);
-
-    // Then get asset configurations
-    request = " SELECT config.id_nut_configuration, conf_attr.keytag, conf_attr.value"
-              " FROM t_bios_nut_configuration config"
-              " INNER JOIN t_bios_nut_configuration_attribute conf_attr"
-              " ON conf_attr.id_nut_configuration = config.id_nut_configuration";
-    request += request_where;
-    request += " ORDER BY config.priority ASC, config.id_nut_configuration";
-
-    DeviceConfigurationInfos asset_config_id_list = request_database_config_list(conn, request, asset_id);
-
-    // Save first part of result
-    auto it_default_config_id_list = default_config_id_list.begin();
-    while (it_default_config_id_list != default_config_id_list.end()) {
-        DeviceConfigurationInfo config_info;
-        config_info.id = (*it_default_config_id_list).id;
-        config_info.attributes.insert((*it_default_config_id_list).attributes.begin(), (*it_default_config_id_list).attributes.end());
-        device_config_id_list.emplace_back(config_info);
-        it_default_config_id_list ++;
-    }
-
-    // Merge asset config to default config:
-    auto it_asset_config_id_list = asset_config_id_list.begin();
-    while (it_asset_config_id_list != asset_config_id_list.end()) {
-        size_t config_id = (*it_asset_config_id_list).id;
-        auto it_config_id_list = std::find_if(device_config_id_list.begin(), device_config_id_list.end(),
-            [&config_id](const DeviceConfigurationInfo& val){ return val.id == config_id; });
-        // If config id not found
-        if (it_config_id_list == device_config_id_list.end()) {
-            // - insert new elements from asset config
-            DeviceConfigurationInfo config_info;
-            config_info.id = config_id;
-            config_info.attributes.insert((*it_asset_config_id_list).attributes.begin(), (*it_asset_config_id_list).attributes.end());
-            device_config_id_list.emplace_back(config_info);
-        }
-        // else config id has been found
-        else {
-            // - first add new elements from asset config if not present in default config
-            (*it_config_id_list).attributes.insert((*it_asset_config_id_list).attributes.begin(), (*it_asset_config_id_list).attributes.end());
-            // - then update default element value with asset config value if their keys are identical
-            for(auto& it : (*it_asset_config_id_list).attributes) {
-                (*it_config_id_list).attributes[it.first] = it.second;
-            }
-        }
-        it_asset_config_id_list ++;
-    }
+    DeviceConfigurationInfos device_config_id_list = request_database_config_list(conn, request, asset_id);
 
     // Get all secw document id for each configuration
     auto it_device_config_id_list = device_config_id_list.begin();
@@ -218,7 +154,7 @@ static DeviceConfigurationInfos get_config_list (tntdb::Connection& conn, const 
  */
 DeviceConfigurationInfos get_candidate_config_list (tntdb::Connection& conn, const std::string& asset_name)
 {
-    const std::string request_where = " WHERE config.id_asset_element = :asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE";
+    const std::string request_where = " WHERE id_asset_element = :asset_id AND is_working = TRUE AND is_enabled = TRUE";
     return get_config_list(conn, request_where, asset_name);
 }
 
@@ -253,7 +189,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
     }
 #endif
 
-    const std::string request_where = " WHERE config.id_asset_element = :asset_id";
+    const std::string request_where = " WHERE id_asset_element = :asset_id";
     return get_config_list(conn, request_where, asset_name);
 }
 
