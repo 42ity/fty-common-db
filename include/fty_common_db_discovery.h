@@ -54,18 +54,6 @@ struct DeviceConfigurationInfoDetail {
 
 using DeviceConfigurationInfoDetails = std::vector<DeviceConfigurationInfoDetail>;
 
-#if 0
-/**
- * @function get_candidate_config Get first candidate configuration of an asset
- * @param conn The connection to the database
- * @param asset_name The asset name to get configuration
- * @param config_id [out] The return configuration id
- * @param device_config [out] The return configuration of the asset
- * @return {integer} 0 if no error else < 0
- */
-int get_candidate_config (tntdb::Connection& conn, const std::string& asset_name, std::string &config_id, nutcommon::DeviceConfiguration& device_config)
-#endif
-
 /**
  * @function get_candidate_config_list Get candidate configuration list of an asset
  * @param conn The connection to the database

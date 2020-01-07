@@ -57,125 +57,6 @@ static uint64_t get_asset_id (tntdb::Connection& conn, const std::string& asset_
     return id;
 }
 
-#if 0
-/**
- * @function get_database_config Request in database first candidate configuration of an asset
- * @param conn the connection to the database
- * @param request The request to send to the database
- * @param asset_id The asset id to get configuration
- * @param config_id [out] The return configuration id
- * @param device_config [out] The return configuration of the asset
- * @return {integer} 0 if no error else < 0
- */
-static int request_database_config (tntdb::Connection& conn, const std::string& request, const int64_t asset_id, std::string &config_id, nutcommon::DeviceConfiguration& device_config)
-{
-    try {
-        tntdb::Statement st = conn.prepareCached(request);
-        tntdb::Result result = st.set("asset_id", asset_id).select();
-        std::string config_id_in_progress;
-        for (auto &row: result) {
-            row["id_nut_configuration"].get(config_id);
-            if (config_id_in_progress.empty()) {
-                config_id_in_progress = config_id;
-            }
-            if (config_id_in_progress == config_id) {
-                std::string keytag;
-                std::string value;
-                row["keytag"].get(keytag);
-                row["value"].get(value);
-                if (!keytag.empty()) {
-                    device_config.insert(std::make_pair(keytag.c_str(), value.c_str()));
-                }
-                else {
-                    return -1;
-                }
-            }
-            else {
-                break;
-            }
-        }
-        return 0;
-    }
-    catch (const std::exception &e) {
-        LOG_END_ABNORMAL(e);
-        return -1;
-    }
-}
-
-/**
- * @function get_candidate_config Get first candidate configuration of an asset
- * @param conn The connection to the database
- * @param asset_name The asset name to get configuration
- * @param config_id [out] The return configuration id
- * @param device_config [out] The return configuration of the asset
- * @return {integer} 0 if no error else < 0
- */
-int get_candidate_config (tntdb::Connection& conn, const std::string& asset_name, std::string &config_id, nutcommon::DeviceConfiguration& device_config)
-{
-   const  int64_t asset_id = get_asset_id(conn, asset_name);
-    if (asset_id < 0) {
-        log_error("Element %s not found", asset_name.c_str());
-        return -1;
-    }
-    try {
-        // Get first default configurations
-        std::string request = " SELECT config.id_nut_configuration, conf_def_attr.keytag, conf_def_attr.value"
-            " FROM t_bios_nut_configuration config"
-            " INNER JOIN t_bios_nut_configuration_default_attribute conf_def_attr"
-            " ON conf_def_attr.id_nut_configuration_type = config.id_nut_configuration_type"
-            " WHERE config.id_asset_element =: asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE"
-              " ORDER BY config.priority ASC, config.id_nut_configuration";
-
-        std::string default_config_id;
-        nutcommon::DeviceConfiguration default_config;
-        int res = request_database_config(conn, request, asset_id, default_config_id, default_config);
-        if (res < 0) {
-            log_error("Error during getting default configuration");
-            return -2;
-        }
-
-        // Then get asset configurations
-        request = " SELECT config.id_nut_configuration, conf_attr.keytag, conf_attr.value"
-            " FROM t_bios_nut_configuration config"
-            " INNER JOIN t_bios_nut_configuration_attribute conf_attr"
-            " ON conf_attr.id_nut_configuration = config.id_nut_configuration"
-            " WHERE config.id_asset_element = :asset_id AND config.is_working = TRUE AND config.is_enabled = TRUE "
-            " ORDER BY config.priority ASC, config.id_nut_configuration";
-
-        std::string asset_config_id;
-        nutcommon::DeviceConfiguration asset_config;
-        res = request_database_config(conn, request, asset_id, asset_config_id, asset_config);
-        if (res < 0) {
-            log_error("Error during getting asset configuration");
-            return -3;
-        }
-
-        if (default_config_id != asset_config_id) {
-            log_error("Default config id different of asset config id");
-            return -4;
-        }
-
-        config_id = default_config_id;
-
-        // Save first part of result
-        device_config.insert(default_config.begin(), default_config.end());
-
-        // Merge asset config to default config:
-        // - first add new elements from asset config if not present in default config
-        device_config.insert(asset_config.begin(), asset_config.end());
-        // - then update default element value with asset config value if their keys are identical
-        for(auto& it : asset_config) {
-            device_config[it.first] = it.second;
-        }
-        return 0;
-    }
-    catch (const std::exception &e) {
-        LOG_END_ABNORMAL(e);
-        return -5;
-    }
-}
-#endif
-
 /**
  * @function request_database_config_list Request in database all candidate configurations of an asset
  * @param conn The connection to the database
@@ -591,28 +472,8 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
  */
 void remove_config (tntdb::Connection& conn, const size_t config_id)
 {
-#if 0
-    // Remove configuration in t_bios_nut_configuration_secw_document table
-    tntdb::Statement st = conn.prepareCached(
-        " DELETE"
-        " FROM"
-        "   t_bios_nut_configuration_secw_document"
-        " WHERE"
-        "   id_nut_configuration = :config_id"
-    );
-    st.set("config_id", config_id).execute();
-
-    // Then remove configuration in t_bios_nut_configuration_attribute table
-    st = conn.prepareCached(
-        " DELETE"
-        " FROM"
-        "   t_bios_nut_configuration_attribute"
-        " WHERE"
-        "   id_nut_configuration = :config_id"
-    );
-    st.set("config_id", config_id).execute();
-#endif
-    // Finally, remove configuration in t_bios_nut_configuration table
+    // Remove configuration in t_bios_nut_configuration table
+    // Note: Data in other tables are removed automatically with constraints definition
     tntdb::Statement st = conn.prepareCached(
         " DELETE"
         " FROM"
@@ -1085,24 +946,6 @@ void fty_common_db_discovery_test (bool verbose)
     for (int i = 0; i < nb_assets; i ++) {
         asset_id = t_asset_id[i];
         std::cout << "\n<<<<<<<<<<<<<<<<<<< Test with asset " << t_asset_name[i] << "/" << asset_id << ":" << std::endl;
-
-        // Test get_candidate_config function
-        {
-#if 0
-            nutcommon::DeviceConfiguration device_config_list;
-            std::cout << "\nTest get_candidate_config for " << t_asset_name[i] << ":" << std::endl;
-            std::string device_config_id;
-            int res = DBAssetsDiscovery::get_candidate_config(conn, t_asset_name[i], device_config_id, device_config_list);
-            assert(res == 0);
-            std::map<std::string, std::string> key_value_res = test_results[t_asset_name[i]].at(0);
-            assert(key_value_res.size() == device_config_list.size());
-            std::map<std::string, std::string>::iterator itr;
-            for (itr = device_config_list.begin(); itr != device_config_list.end(); ++itr) {
-                std::cout << "[" << itr->first << "] = " << itr->second << std::endl;
-                assert(key_value_res.at(itr->first) == itr->second);
-            }
-#endif
-        }
 
         // Test get_candidate_config_list function
         {
