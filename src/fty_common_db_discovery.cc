@@ -509,7 +509,8 @@ DeviceConfigurationInfoDetails get_all_configuration_types (tntdb::Connection& c
 
 // FIXME: No necessary rights for this diectory
 //std::string run_working_path_test("/var/run/fty_common_db_discovery");
-std::string run_working_path_test("/home/admin/fty_common_db_discovery");
+//std::string run_working_path_test("/home/admin/fty_common_db_discovery");
+std::string run_working_path_test = "/tmp/fty_common_db_discovery";
 
 void test_start_database (std::string test_working_dir)
 {
