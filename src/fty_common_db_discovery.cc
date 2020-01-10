@@ -506,12 +506,32 @@ DeviceConfigurationInfoDetails get_all_configuration_types (tntdb::Connection& c
 #define SELFTEST_DIR_RO "src/selftest-ro"
 #define SELFTEST_DIR_RW "src/selftest-rw"
 
-// FIXME: No necessary rights for this diectory
-//std::string run_working_path_test("/var/run/fty_common_db_discovery");
-//std::string run_working_path_test("/home/admin/fty_common_db_discovery");
-std::string run_working_path_test = "/tmp/fty_common_db_discovery";
+char *test_create_temp (const char *path, const char *base_name)
+{
+    char *base_temp_dir_path = NULL;
+    asprintf(&base_temp_dir_path,
+        "%s/%s_XXXXXX",
+        path ? path : "/tmp",
+        base_name ? base_name : __FUNCTION__);
 
-void test_start_database (std::string test_working_dir)
+    if (!base_temp_dir_path) {
+        std::cout << "asprintf failed" << std::endl;
+        return NULL;
+    }
+    char *temp_dir_path =  mkdtemp(base_temp_dir_path);
+    if (!temp_dir_path) {
+        std::cout << "mkdtemp failed" << std::endl;
+        return NULL;
+    }
+    // Change the right of the directory
+    if (chmod(temp_dir_path, 0755 /*S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH*/) != 0) {
+        std::cout << "asprintf failed" << std::endl;
+        return NULL;
+    }
+    return temp_dir_path;
+}
+
+void test_start_database (std::string test_working_dir, std::string run_working_dir)
 {
     int mysql_port = 30001;
 
@@ -520,9 +540,14 @@ void test_start_database (std::string test_working_dir)
     buffer << "mkdir " << SELFTEST_DIR_RW;
     std::string command = buffer.str();
     assert(system(command.c_str()) >= 0);
+    // Create test_working_dir
+    buffer.str("");
+    buffer << "mkdir " << test_working_dir;
+    command = buffer.str();
+    assert(system(command.c_str()) >= 0);
     // Create working path for test
     buffer.str("");
-    buffer << "mkdir " << run_working_path_test;
+    buffer << "mkdir " << run_working_dir;
     command = buffer.str();
     assert(system(command.c_str()) >= 0);
     // Create shell script to execute
@@ -536,28 +561,28 @@ void test_start_database (std::string test_working_dir)
     file << "mkdir $TEST_PATH\n";
     file << "mkdir $TEST_PATH/db\n";
     file << "mysql_install_db --datadir=$TEST_PATH/db\n";
-    file << "mkfifo " << run_working_path_test << "/mysqld.sock\n";
-    
+    file << "mkfifo " << run_working_dir << "/mysqld.sock\n";
+
     // FIXME: TO REMOVE
-    file << "ls -la " << run_working_path_test << "/mysqld.sock\n";
-    
-    file << "/usr/sbin/mysqld --no-defaults --pid-file=" << run_working_path_test << "/mysqld.pid";
-    file << " --datadir=$TEST_PATH/db --socket=" << run_working_path_test << "/mysqld.sock";
+    file << "ls -la " << run_working_dir << "/mysqld.sock\n";
+
+    file << "/usr/sbin/mysqld --no-defaults --pid-file=" << run_working_dir << "/mysqld.pid";
+    file << " --datadir=$TEST_PATH/db --socket=" << run_working_dir << "/mysqld.sock";
     file << " --port " << mysql_port << " &\n";
     file << "sleep 3\n";
-    
+
     // FIXME: TO REMOVE
-    file << "ls -la " << run_working_path_test << "/mysqld.pid\n";
-    file << "read -r PID < \"" << run_working_path_test << "/mysqld.pid\"\n";
+    file << "ls -la " << run_working_dir << "/mysqld.pid\n";
+    file << "read -r PID < \"" << run_working_dir << "/mysqld.pid\"\n";
     file << "echo PIDtest=$PID\n";
-    
-    file << "mysql -u root -S " << run_working_path_test << "/mysqld.sock < /usr/share/bios/sql/mysql/initdb.sql\n";
-    file << "for i in $(ls /usr/share/bios/sql/mysql/0*.sql | sort); do mysql -u root -S " << run_working_path_test << "/mysqld.sock < $i; done\n";
-    
+
+    file << "mysql -u root -S " << run_working_dir << "/mysqld.sock < /usr/share/bios/sql/mysql/initdb.sql\n";
+    file << "for i in $(ls /usr/share/bios/sql/mysql/0*.sql | sort); do mysql -u root -S " << run_working_dir << "/mysqld.sock < $i; done\n";
+
     // FIXME: TO REMOVE
     file << "sleep 3\n";
-    //file << "mysqldump -u root -S " << run_working_path_test << "/mysqld.sock box_utf8 t_bios_asset_element_type t_bios_asset_device_type t_bios_asset_element";
-    file << "mysqldump -u root -S " << run_working_path_test << "/mysqld.sock box_utf8";
+    //file << "mysqldump -u root -S " << run_working_dir << "/mysqld.sock box_utf8 t_bios_asset_element_type t_bios_asset_device_type t_bios_asset_element";
+    file << "mysqldump -u root -S " << run_working_dir << "/mysqld.sock box_utf8";
     file.close();
 
     // Change the right of the shell script for execution
@@ -570,7 +595,7 @@ void test_start_database (std::string test_working_dir)
     remove(file_path.c_str());
 }
 
-void test_stop_database (std::string test_working_dir)
+void test_stop_database (std::string test_working_dir, std::string run_working_dir)
 {
     // Create shell script to execute
     std::stringstream buffer;
@@ -579,17 +604,17 @@ void test_stop_database (std::string test_working_dir)
     std::ofstream file;
     file.open(file_path);
     file << "#!/bin/bash\n";
-    file << "read -r PID < \"" << run_working_path_test << "/mysqld.pid\"\n";
+    file << "read -r PID < \"" << run_working_dir << "/mysqld.pid\"\n";
     file << "echo PID=$PID\n";
-    file << "if [ -n \"$PID\" ]; then\n";    
+    file << "if [ -n \"$PID\" ]; then\n";
     file << "kill -9 $PID\n";
     file << "echo PID exist\n";
     file << "sleep 3\n";
     file << "fi\n";
     file << "echo PID not exist\n";
-    file << "rm -rf " << test_working_dir << "/db\n";
-    file << "rm -rf " << run_working_path_test << "\n";
-    file << "ls -la " << run_working_path_test << "\n";
+    file << "rm -rf " << test_working_dir << "\n";
+    file << "rm -rf " << run_working_dir << "\n";
+    file << "ls -la " << run_working_dir << "\n";
     file << "echo END\n";
     file.close();
 
@@ -719,19 +744,25 @@ void fty_common_db_discovery_test (bool verbose)
     // Set working test directory
     std::stringstream buffer;
     buffer << current_working_dir << "/" << SELFTEST_DIR_RW;
-    std::string test_working_dir = buffer.str();
+    char *tmp_directory = test_create_temp(buffer.str().c_str(), "fty_common_db_discovery");
+    assert(tmp_directory);
+    std::string test_working_dir(tmp_directory);
+
+    tmp_directory = test_create_temp("/tmp", "fty_common_db_discovery");
+    assert(tmp_directory);
+    std::string run_working_dir(tmp_directory);
 
     // FIXME
     // Stop previous instance of database if test failed
-    test_stop_database(test_working_dir);
+    test_stop_database(test_working_dir, run_working_dir);
 
     // Create and start database for test
-    test_start_database(test_working_dir);
+    test_start_database(test_working_dir, run_working_dir);
 
     tntdb::Connection conn;
     try {
         buffer.str("");
-        buffer << "mysql:db=box_utf8;user=root;unix_socket=" << run_working_path_test << "/mysqld.sock";
+        buffer << "mysql:db=box_utf8;user=root;unix_socket=" << run_working_dir << "/mysqld.sock";
         std::string url = buffer.str();
         conn = tntdb::connect(url);
     }
@@ -1041,7 +1072,7 @@ void fty_common_db_discovery_test (bool verbose)
     //test_del_data_database(conn);
 
     // Stop and remove database
-    test_stop_database(test_working_dir);
+    test_stop_database(test_working_dir, run_working_dir);
 
     printf ("\nEnd tests \n");
 }
