@@ -553,6 +553,10 @@ void test_start_database (std::string test_working_dir)
     
     file << "mysql -u root -S " << run_working_path_test << "/mysqld.sock < /usr/share/bios/sql/mysql/initdb.sql\n";
     file << "for i in $(ls /usr/share/bios/sql/mysql/0*.sql | sort); do mysql -u root -S " << run_working_path_test << "/mysqld.sock < $i; done\n";
+    
+    // FIXME: TO REMOVE
+    file << "sleep 3\n";
+    file << "mysqldump -u root -S " << run_working_path_test << "/mysqld.sock box_utf8 t_bios_asset_element_type t_bios_asset_device_type t_bios_asset_element";
     file.close();
 
     // Change the right of the shell script for execution
@@ -736,11 +740,11 @@ void fty_common_db_discovery_test (bool verbose)
     std::vector<std::string> t_asset_name = { "ups-1", "ups-2", "ups-3" };
     std::vector<int64_t> t_asset_id;
 
-    uint16_t element_type_id = 6;  // ups
+    uint16_t element_type_id = 6;  // device
     uint32_t parent_id = 1;  // rack
     const char *status = "active";
     uint16_t priority = 5;
-    uint16_t subtype_id = 1;
+    uint16_t subtype_id = 1;   // ups
     const char *asset_tag = NULL;
     bool update = true;
     db_reply_t res;
