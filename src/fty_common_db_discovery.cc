@@ -170,14 +170,13 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
 #if 1
     auto credentialsSNMPv1 = nutcommon::getCredentialsSNMPv1();
     auto credentialsSNMPv3 = nutcommon::getCredentialsSNMPv3();
-
     for (auto it = credentialsSNMPv1.begin(); it != credentialsSNMPv1.end(); it ++) {
         tntdb::Statement st = conn.prepareCached(
             " INSERT IGNORE INTO t_bios_secw_document"
             " (id_secw_document, id_secw_document_type)"
             " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
         );
-        st.set("id_secw_document", it->documentId).execute();
+        st.set("id_secw_document", (*it).documentId).execute();
     }
     for (auto it = credentialsSNMPv3.begin(); it != credentialsSNMPv3.end(); it ++) {
         tntdb::Statement st = conn.prepareCached(
@@ -185,7 +184,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
             " (id_secw_document, id_secw_document_type)"
             " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
         );
-        st.set("id_secw_document", it->documentId).execute();
+        st.set("id_secw_document", (*it).documentId).execute();
     }
 #endif
 
