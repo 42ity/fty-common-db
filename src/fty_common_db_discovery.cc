@@ -537,10 +537,20 @@ void test_start_database (std::string test_working_dir)
     file << "mkdir $TEST_PATH/db\n";
     file << "mysql_install_db --datadir=$TEST_PATH/db\n";
     file << "mkfifo " << run_working_path_test << "/mysqld.sock\n";
+    
+    // FIXME: TO REMOVE
+    file << "ls -la " << run_working_path_test << "/mysqld.sock\n";
+    
     file << "/usr/sbin/mysqld --no-defaults --pid-file=" << run_working_path_test << "/mysqld.pid";
     file << " --datadir=$TEST_PATH/db --socket=" << run_working_path_test << "/mysqld.sock";
     file << " --port " << mysql_port << " &\n";
     file << "sleep 3\n";
+    
+    // FIXME: TO REMOVE
+    file << "ls -la " << run_working_path_test << "/mysqld.pid\n";
+    file << "read -r PID < \"" << run_working_path_test << "/mysqld.pid\"\n";
+    file << "echo PIDtest=$PID\n";
+    
     file << "mysql -u root -S " << run_working_path_test << "/mysqld.sock < /usr/share/bios/sql/mysql/initdb.sql\n";
     file << "for i in $(ls /usr/share/bios/sql/mysql/0*.sql | sort); do mysql -u root -S " << run_working_path_test << "/mysqld.sock < $i; done\n";
     file.close();
