@@ -744,7 +744,8 @@ void fty_common_db_discovery_test (bool verbose)
     // Set working test directory
     std::stringstream buffer;
     buffer << current_working_dir << "/" << SELFTEST_DIR_RW;
-    char *tmp_directory = test_create_temp(buffer.str().c_str(), "fty_common_db_discovery");
+    std::string base_dir_temp = buffer.str();
+    char *tmp_directory = test_create_temp(base_dir_temp.c_str(), "fty_common_db_discovery");
     assert(tmp_directory);
     std::string test_working_dir(tmp_directory);
 
@@ -1073,6 +1074,9 @@ void fty_common_db_discovery_test (bool verbose)
 
     // Stop and remove database
     test_stop_database(test_working_dir, run_working_dir);
+
+    // FIXME: Woraroung for memory leak in protobuf
+    google::protobuf::ShutdownProtobufLibrary();
 
     printf ("\nEnd tests \n");
 }
