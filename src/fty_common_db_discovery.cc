@@ -580,10 +580,16 @@ void test_stop_database (std::string test_working_dir)
     file << "#!/bin/bash\n";
     file << "read -r PID < \"" << run_working_path_test << "/mysqld.pid\"\n";
     file << "echo PID=$PID\n";
+    file << "if [ -n \"$PID\" ]; then\n";    
     file << "kill -9 $PID\n";
+    file << "echo PID exist\n";
     file << "sleep 3\n";
+    file << "fi\n";
+    file << "echo PID not exist\n";
     file << "rm -rf " << test_working_dir << "/db\n";
     file << "rm -rf " << run_working_path_test << "\n";
+    file << "ls -la " << run_working_path_test << "\n";
+    file << "echo END\n";
     file.close();
 
     // Change the right of the shell script for execution
