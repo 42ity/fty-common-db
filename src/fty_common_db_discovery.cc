@@ -556,7 +556,8 @@ void test_start_database (std::string test_working_dir)
     
     // FIXME: TO REMOVE
     file << "sleep 3\n";
-    file << "mysqldump -u root -S " << run_working_path_test << "/mysqld.sock box_utf8 t_bios_asset_element_type t_bios_asset_device_type t_bios_asset_element";
+    //file << "mysqldump -u root -S " << run_working_path_test << "/mysqld.sock box_utf8 t_bios_asset_element_type t_bios_asset_device_type t_bios_asset_element";
+    file << "mysqldump -u root -S " << run_working_path_test << "/mysqld.sock box_utf8";
     file.close();
 
     // Change the right of the shell script for execution
