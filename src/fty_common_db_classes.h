@@ -32,9 +32,9 @@
 //  External API
 #include "../include/fty_common_db.h"
 
-//  Opaque class structures to allow forward references
-
 //  Extra headers
+
+//  Opaque class structures to allow forward references
 
 //  Internal API
 
