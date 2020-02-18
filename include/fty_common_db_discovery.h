@@ -109,11 +109,18 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
                       const std::set<secw::Id>& secw_document_id_list,
                       const nutcommon::DeviceConfiguration& key_value_asset_list);
 /**
- * @function remove_config Remove a configuration from database
+ * @function remove_config_id Remove a configuration from database
  * @param conn The connection to the database
  * @param config_id The configuration id to remove
  */
-void remove_config (tntdb::Connection& conn, const size_t config_id);
+void remove_config_id (tntdb::Connection& conn, const size_t config_id);
+
+/**
+ * @function remove_all_config Remove all configuration from database according an asset name
+ * @param conn The connection to the database
+ * @param asset_name The asset name of configurations to remove
+ */
+void remove_config_asset (tntdb::Connection& conn, const std::string& asset_name);
 
 /**
  * @function get_all_configuration_types Get specific configuration detailed information for each configuration type

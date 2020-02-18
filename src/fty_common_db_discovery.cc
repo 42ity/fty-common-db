@@ -40,7 +40,7 @@ namespace DBAssetsDiscovery {
  * @function get_asset_id get asset id from asset name
  * @param conn The connection to the database
  * @param asset_name The asset name to search
- * @return {integer} the asset id found if success else < 0
+ * @return {integer} the asset id found if success else equal to 0
  */
 static uint64_t get_asset_id (tntdb::Connection& conn, const std::string& asset_name)
 {
@@ -182,7 +182,7 @@ DeviceConfigurationInfos get_all_config_list (tntdb::Connection& conn, const std
         tntdb::Statement st = conn.prepareCached(
             " INSERT IGNORE INTO t_bios_secw_document"
             " (id_secw_document, id_secw_document_type)"
-            " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv1')"
+            " VALUES(UUID_TO_BIN(:id_secw_document), 'Snmpv3')"
         );
         st.set("id_secw_document", (*it).documentId).execute();
     }
@@ -405,7 +405,7 @@ size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, co
  * @param conn The connection to the database
  * @param config_id The configuration id to remove
  */
-void remove_config (tntdb::Connection& conn, const size_t config_id)
+void remove_config_id (tntdb::Connection& conn, const size_t config_id)
 {
     // Remove configuration in t_bios_nut_configuration table
     // Note: Data in other tables are removed automatically with constraints definition
@@ -417,6 +417,32 @@ void remove_config (tntdb::Connection& conn, const size_t config_id)
         "   id_nut_configuration = :config_id"
     );
     st.set("config_id", config_id).execute();
+}
+
+/**
+ * @function remove_config_asset Remove all configurations from database according an asset name
+ * @param conn The connection to the database
+ * @param asset_name The asset name of configurations to remove
+ */
+void remove_config_asset (tntdb::Connection& conn, const std::string& asset_name)
+{
+    const uint64_t asset_id = get_asset_id(conn, asset_name);
+
+    tntdb::Statement st = conn.prepareCached(
+        " SELECT id_nut_configuration"
+        " FROM"
+        "   t_bios_nut_configuration"
+        " WHERE id_asset_element = :asset_id"
+    );
+
+    tntdb::Result result = st.set("asset_id", asset_id).select();
+    size_t config_id;
+    // For each config of the asset name
+    for (auto &row: result) {
+        row["id_nut_configuration"].get(config_id);
+        // Remove config
+        remove_config_id(conn, config_id);
+    }
 }
 
 /**
@@ -745,6 +771,7 @@ void fty_common_db_discovery_test (bool verbose)
     std::stringstream buffer;
     buffer << current_working_dir << "/" << SELFTEST_DIR_RW;
     std::string base_dir_temp = buffer.str();
+    mkdir(base_dir_temp.c_str(), 0777);
     char *tmp_directory = test_create_temp(base_dir_temp.c_str(), "fty_common_db_discovery");
     assert(tmp_directory);
     std::string test_working_dir(tmp_directory);
@@ -925,6 +952,18 @@ void fty_common_db_discovery_test (bool verbose)
         " (2, 'snmp_version', 'v3')")) == 0
     );
 
+    //  Safety test
+    {
+        try {
+            uint64_t asset_id = DBAssetsDiscovery::get_asset_id(conn, "");
+            std::cout << "asset_id=" << asset_id << std::endl;
+            assert(0);  // Should throw an exeption
+        }
+        catch (std::runtime_error &e) {
+            std::cout << "Caught a runtime_error exception: " << e.what () << std::endl;
+        }
+    }
+
     // Test for each asset
     for (uint i = 0; i < t_asset_id.size(); i ++) {
         int asset_id = t_asset_id[i];
@@ -1032,7 +1071,7 @@ void fty_common_db_discovery_test (bool verbose)
         }
     }
 
-    // Test insert_config and remove_config function
+    // Test insert_config and remove_config_id function
     {
         std::map<std::string, std::string> key_value_asset_list = {{ "Key1", "Val1"}, { "Key2", "Val2"}, { "Key3", "Val3"}};
         std::set<secw::Id> secw_document_id_list = {{ "11111111-1111-1111-1111-000000000001" }};
@@ -1042,7 +1081,7 @@ void fty_common_db_discovery_test (bool verbose)
             true, true, secw_document_id_list, key_value_asset_list);
         assert(config_id > 0);
         // Remove inserted config
-        DBAssetsDiscovery::remove_config(conn, config_id);
+        DBAssetsDiscovery::remove_config_id(conn, config_id);
     }
 
     // Test get_all_configuration_types function
@@ -1067,6 +1106,20 @@ void fty_common_db_discovery_test (bool verbose)
             }
             it_config_info_list ++;
         }
+    }
+
+    // Test remove_config_asset function
+    {
+        DBAssetsDiscovery::DeviceConfigurationInfos device_config_id_list;
+        std::cout << "\nTest get_candidate_configs for ups-1:" << std::endl;
+        device_config_id_list = DBAssetsDiscovery::get_all_config_list(conn, "ups-1");
+        std::cout << "size=" << device_config_id_list.size() << std::endl;
+        assert(device_config_id_list.size() == 3);
+        // Remove all ups-1 configs
+        DBAssetsDiscovery::remove_config_asset(conn, "ups-1");
+        device_config_id_list = DBAssetsDiscovery::get_all_config_list(conn, "ups-1");
+        std::cout << "size=" << device_config_id_list.size() << std::endl;
+        assert(device_config_id_list.size() == 0);
     }
 
     // Remove data previously added in database
