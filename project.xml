@@ -74,7 +74,6 @@
         test = "fty_common_selftest" >
     </use>
     
-    <!--TODO: To remove, it is a workaround for secure database init -->
     <use project = "fty-common-nut" libname = "libfty_common_nut" header = "fty_common_nut.h"
             repository = "https://github.com/42ity/fty-common-nut.git"
             test = "fty_common_nut_selftest" />
