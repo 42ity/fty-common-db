@@ -414,7 +414,7 @@ void remove_config_asset (tntdb::Connection& conn, const std::string& asset_name
     );
 
     tntdb::Result result = st.set("asset_id", asset_id).select();
-    size_t config_id;
+    size_t config_id = 0;
     // For each config of the asset name
     for (auto &row: result) {
         row["id_nut_configuration"].get(config_id);
