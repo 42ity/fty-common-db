@@ -29,8 +29,6 @@
 #include "fty_common_db_classes.h"
 #include <fty_common_macros.h>
 #include <fty_common.h>
-#include <fty_common_nut_utils.h>
-#include <fty_common_nut_credentials.h>
 
 #include <assert.h>
 
@@ -71,7 +69,7 @@ static DeviceConfigurationInfos request_database_config_list (tntdb::Connection&
     tntdb::Statement st = conn.prepareCached(request);
     tntdb::Result res = st.set("asset_id", asset_id).select();
     size_t config_id_in_progress = 0;
-    nutcommon::DeviceConfiguration config;
+    fty::nut::DeviceConfiguration config;
     for (auto &row: res) {
         size_t config_id = 0;
         row["id_nut_configuration"].get(config_id);
@@ -293,8 +291,8 @@ void modify_config_priorities (tntdb::Connection& conn, const std::string& asset
  */
 size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, const size_t config_type,
                       const bool is_working, const bool is_enabled,
-                      const std::set<secw::Id>& secw_document_id_list,
-                      const nutcommon::DeviceConfiguration& key_value_asset_list)
+                      const std::set<std::string>& secw_document_id_list,
+                      const fty::nut::DeviceConfiguration& key_value_asset_list)
 {
     const uint64_t asset_id = get_asset_id(conn, asset_name);
 
@@ -1052,7 +1050,7 @@ void fty_common_db_discovery_test (bool verbose)
     // Test insert_config and remove_config_id function
     {
         std::map<std::string, std::string> key_value_asset_list = {{ "Key1", "Val1"}, { "Key2", "Val2"}, { "Key3", "Val3"}};
-        std::set<secw::Id> secw_document_id_list = {{ "11111111-1111-1111-1111-000000000001" }};
+        std::set<std::string> secw_document_id_list = {{ "11111111-1111-1111-1111-000000000001" }};
         int config_type = 1;
         // Insert new config
         size_t config_id = DBAssetsDiscovery::insert_config(conn, "ups-1", config_type,
@@ -1105,9 +1103,6 @@ void fty_common_db_discovery_test (bool verbose)
 
     // Stop and remove database
     test_stop_database(test_working_dir, run_working_dir);
-
-    // FIXME: Woraroung for memory leak in protobuf
-    google::protobuf::ShutdownProtobufLibrary();
 
     printf ("\nEnd tests \n");
 }

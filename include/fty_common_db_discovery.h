@@ -25,7 +25,6 @@
 // Note: Consumers MUST be built with C++11 or newer standard due to this:
 #include "fty_common_db_defs.h"
 #include "fty_common_library.h"
-#include "fty_common_nut_utils.h"
 
 #include <iomanip>
 #include <map>
@@ -38,8 +37,8 @@ namespace DBAssetsDiscovery {
 
 struct DeviceConfigurationInfo {
     size_t id;
-    nutcommon::DeviceConfiguration attributes;
-    std::set<secw::Id> secwDocumentIdList;
+    fty::nut::DeviceConfiguration attributes;
+    std::set<std::string> secwDocumentIdList;
 };
 
 using DeviceConfigurationInfos = std::vector<DeviceConfigurationInfo>;
@@ -47,8 +46,8 @@ using DeviceConfigurationInfos = std::vector<DeviceConfigurationInfo>;
 struct DeviceConfigurationInfoDetail {
     size_t id;
     std::string prettyName;
-    nutcommon::DeviceConfiguration defaultAttributes;
-    std::set<secw::Id> secwDocumentIdList;
+    fty::nut::DeviceConfiguration defaultAttributes;
+    std::set<std::string> secwDocumentIdList;
     std::set<std::string> secwDocumentTypes;
 };
 
@@ -106,8 +105,8 @@ void modify_config_priorities (tntdb::Connection& conn, const std::string& asset
  */
 size_t insert_config (tntdb::Connection& conn, const std::string& asset_name, const size_t config_type,
                       const bool is_working, const bool is_enabled,
-                      const std::set<secw::Id>& secw_document_id_list,
-                      const nutcommon::DeviceConfiguration& key_value_asset_list);
+                      const std::set<std::string>& secw_document_id_list,
+                      const fty::nut::DeviceConfiguration& key_value_asset_list);
 /**
  * @function remove_config_id Remove a configuration from database
  * @param conn The connection to the database
