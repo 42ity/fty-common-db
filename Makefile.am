@@ -13,14 +13,13 @@ AM_CPPFLAGS = \
     ${tntdb_CFLAGS} \
     ${fty_common_logging_CFLAGS} \
     ${fty_common_CFLAGS} \
-    ${fty_common_nut_CFLAGS} \
     ${libsodium_CFLAGS} \
     ${libzmq_CFLAGS} \
     ${czmq_CFLAGS} \
     -D__STDC_FORMAT_MACROS \
     -I$(srcdir)/include
 
-project_libs = ${cxxtools_LIBS} ${tntdb_LIBS} ${fty_common_logging_LIBS} ${fty_common_LIBS} ${fty_common_nut_LIBS} ${libsodium_LIBS} ${libzmq_LIBS} ${czmq_LIBS}
+project_libs = ${cxxtools_LIBS} ${tntdb_LIBS} ${fty_common_logging_LIBS} ${fty_common_LIBS} ${libsodium_LIBS} ${libzmq_LIBS} ${czmq_LIBS}
 
 SUBDIRS = doc
 SUBDIRS += include
@@ -45,7 +44,6 @@ EXTRA_DIST += \
     Findtntdb.cmake \
     Findfty_common_logging.cmake \
     Findfty_common.cmake \
-    Findfty_common_nut.cmake \
     Findlibsodium.cmake \
     Findlibzmq.cmake \
     Findczmq.cmake \
