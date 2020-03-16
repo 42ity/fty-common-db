@@ -1,0 +1,7 @@
+   fty-common-db -> cxxtools;
+   fty-common-db -> tntdb;
+   fty-common-db -> fty-common-logging;
+   fty-common-db -> fty-common;
+   fty-common-db -> libsodium;
+   fty-common-db -> libzmq;
+   fty-common-db -> czmq;

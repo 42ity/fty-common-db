@@ -11,7 +11,6 @@ AM_CXXFLAGS = \
 AM_CPPFLAGS = \
     ${cxxtools_CFLAGS} \
     ${tntdb_CFLAGS} \
-    ${log4cplus_CFLAGS} \
     ${fty_common_logging_CFLAGS} \
     ${fty_common_CFLAGS} \
     ${libsodium_CFLAGS} \
@@ -20,7 +19,7 @@ AM_CPPFLAGS = \
     -D__STDC_FORMAT_MACROS \
     -I$(srcdir)/include
 
-project_libs = ${cxxtools_LIBS} ${tntdb_LIBS} ${log4cplus_LIBS} ${fty_common_logging_LIBS} ${fty_common_LIBS} ${libsodium_LIBS} ${libzmq_LIBS} ${czmq_LIBS}
+project_libs = ${cxxtools_LIBS} ${tntdb_LIBS} ${fty_common_logging_LIBS} ${fty_common_LIBS} ${libsodium_LIBS} ${libzmq_LIBS} ${czmq_LIBS}
 
 SUBDIRS = doc
 SUBDIRS += include
@@ -43,7 +42,6 @@ if ENABLE_DIST_CMAKEFILES
 EXTRA_DIST += \
     Findcxxtools.cmake \
     Findtntdb.cmake \
-    Findlog4cplus.cmake \
     Findfty_common_logging.cmake \
     Findfty_common.cmake \
     Findlibsodium.cmake \

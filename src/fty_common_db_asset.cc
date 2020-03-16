@@ -807,7 +807,7 @@ select_asset_element_all (tntdb::Connection& conn,
         tntdb::Statement st = conn.prepare(
             " SELECT"
             "   v.id, v.name, v.type_name,"
-            "   v.subtype_name, v.id_parent,"
+            "   v.subtype_name, v.id_parent, v.id_parent_type,"
             "   v.status, v.priority,"
             "   v.asset_tag"
             " FROM"

@@ -94,8 +94,8 @@ namespace fty
     void operator<<= (cxxtools::SerializationInfo& si, const CommonException & exception)
     {
         si.addMember("status") <<= exception.m_status;
-        si.addMember("errorType") <<= exception.m_errorType;
-        si.addMember("errorSubtype") <<= exception.m_errorSubtype;
+        si.addMember("errorType") <<= uint8_t(exception.m_errorType);
+        si.addMember("errorSubtype") <<= uint8_t(exception.m_errorSubtype);
         si.addMember("whatArg") <<= exception.m_whatArg;
         exception.fillSerializationInfo(si.addMember("extraData"));
     }

@@ -49,7 +49,6 @@ BuildRequires:  xmlto
 BuildRequires:  gcc-c++
 BuildRequires:  cxxtools-devel
 BuildRequires:  tntdb-devel
-BuildRequires:  log4cplus-devel
 BuildRequires:  fty-common-logging-devel
 BuildRequires:  fty-common-devel
 BuildRequires:  libsodium-devel
@@ -80,7 +79,6 @@ Group:          System/Libraries
 Requires:       libfty_common_db1 = %{version}
 Requires:       cxxtools-devel
 Requires:       tntdb-devel
-Requires:       log4cplus-devel
 Requires:       fty-common-logging-devel
 Requires:       fty-common-devel
 Requires:       libsodium-devel
