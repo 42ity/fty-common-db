@@ -539,17 +539,17 @@ void test_start_database (std::string test_working_dir, std::string run_working_
 
     std::stringstream buffer;
     // Create selftest-rw if not exist
-    buffer << "mkdir " << SELFTEST_DIR_RW;
+    buffer << "mkdir -p " << SELFTEST_DIR_RW;
     std::string command = buffer.str();
     assert(system(command.c_str()) >= 0);
     // Create test_working_dir
     buffer.str("");
-    buffer << "mkdir " << test_working_dir;
+    buffer << "mkdir -p " << test_working_dir;
     command = buffer.str();
     assert(system(command.c_str()) >= 0);
     // Create working path for test
     buffer.str("");
-    buffer << "mkdir " << run_working_dir;
+    buffer << "mkdir -p " << run_working_dir;
     command = buffer.str();
     assert(system(command.c_str()) >= 0);
     // Create shell script to execute
@@ -560,8 +560,8 @@ void test_start_database (std::string test_working_dir, std::string run_working_
     file.open(file_path);
     file << "#!/bin/bash\n";
     file << "TEST_PATH=" << test_working_dir << "\n";
-    file << "mkdir $TEST_PATH\n";
-    file << "mkdir $TEST_PATH/db\n";
+    file << "mkdir -p $TEST_PATH\n";
+    file << "mkdir -p $TEST_PATH/db\n";
     file << "mysql_install_db --datadir=$TEST_PATH/db\n";
     file << "mkfifo " << run_working_dir << "/mysqld.sock\n";
 
