@@ -685,6 +685,11 @@ void test_del_data_database (tntdb::Connection& conn)
 
 void fty_common_db_discovery_test (bool verbose)
 {
+    if (!verbose) {
+        printf (" * fty_common_db_discovery: skipped\n");
+        return;
+    }
+
     printf (" * fty_common_db_discovery:\n");
 
     std::map<std::string, std::vector<std::map<std::string, std::string>>> test_results = {
