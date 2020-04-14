@@ -1878,7 +1878,7 @@ list_power_devices_with_status (const std::string & status)
     tntdb::Connection conn = tntdb::connectCached(DBConn::url);
 
     std::vector <std::string> asset_list;
-    asset_list = list_power_devices_with_status(conn, status)
+    asset_list = list_power_devices_with_status(conn, status);
     return asset_list;
 }
 
