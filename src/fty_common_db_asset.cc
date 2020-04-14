@@ -1841,7 +1841,7 @@ list_devices_with_status (tntdb::Connection &conn, std::string status)
 }
 
 std::vector <std::string>
-list_power_devices_with_status (tntdb::Connection &conn, std::string status)
+list_power_devices_with_status (tntdb::Connection &conn, const std::string & status)
 {
     std::vector <std::string> asset_list;
     try {
@@ -1869,6 +1869,16 @@ list_power_devices_with_status (tntdb::Connection &conn, std::string status)
     catch (const std::exception &e) {
         throw std::runtime_error("Reading from DB failed.");
     }
+    return asset_list;
+}
+
+std::vector <std::string>
+list_power_devices_with_status (const std::string & status)
+{
+    tntdb::Connection conn = tntdb::connectCached(DBConn::url);
+
+    std::vector <std::string> asset_list;
+    asset_list = list_power_devices_with_status(conn, status)
     return asset_list;
 }
 
