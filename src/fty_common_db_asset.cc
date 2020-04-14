@@ -1814,7 +1814,7 @@ select_links_by_container (tntdb::Connection &conn,
 std::vector <std::string>
 list_devices_with_status (tntdb::Connection &conn, std::string status)
 {
-    std::vector <std::string> inactive_list;
+    std::vector <std::string> asset_list;
     try {
         tntdb::Statement st = conn.prepareCached(
             " SELECT"
@@ -1830,14 +1830,46 @@ list_devices_with_status (tntdb::Connection &conn, std::string status)
         for (auto &row : result) {
             std::string device;
             row [0].get (device);
-            inactive_list.push_back (device);
+            asset_list.push_back (device);
         }
 
     }
     catch (const std::exception &e) {
         throw std::runtime_error("Reading from DB failed.");
     }
-    return inactive_list;
+    return asset_list;
+}
+
+std::vector <std::string>
+list_power_devices_with_status (tntdb::Connection &conn, std::string status)
+{
+    std::vector <std::string> asset_list;
+    try {
+        tntdb::Statement st = conn.prepareCached(
+            " SELECT"
+            "   v.name, v.id_subtype"
+            " FROM"
+            "   t_bios_asset_element v"
+            " WHERE v.id_subtype IN "
+                "(SELECT id_asset_device_type FROM t_bios_asset_device_type "
+                "WHERE name IN ('epdu', 'sts', 'ups', 'pdu', 'genset')) "
+            " AND v.status = :vstatus "
+        );
+
+        tntdb::Result result = st.set("vstatus", status).select();
+        log_trace("[t_bios_asset_element]: were selected %" PRIu32 " rows",
+                                                            result.size());
+        for (auto &row : result) {
+            std::string device;
+            row [0].get (device);
+            asset_list.push_back (device);
+        }
+
+    }
+    catch (const std::exception &e) {
+        throw std::runtime_error("Reading from DB failed.");
+    }
+    return asset_list;
 }
 
 int
