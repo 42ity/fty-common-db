@@ -29,7 +29,8 @@ Build-Depends: debhelper (>= 9),
     libtntdb-dev,
     libfty-common-logging-dev,
     libfty-common-dev,
-    libczmq-dev (>= 3.0.2)
+    libczmq-dev (>= 3.0.2),
+    libfty-utils-dev
 
 Package: libfty-common-db1
 Architecture: any
@@ -48,7 +49,8 @@ Depends:
     libfty-common-logging-dev,
     libfty-common-dev,
     libczmq-dev (>= 3.0.2),
-    libfty-common-db1 (= ${binary:Version})
+    libfty-common-db1 (= ${binary:Version}),
+    libfty-utils-dev
 Description: fty-common-db development tools
  This package contains development files for fty-common-db:
  provides common database tools for agents
