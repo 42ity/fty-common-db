@@ -76,6 +76,10 @@ fty::db::Connection::Connection()
 {
 }
 
+fty::db::Connection::~Connection()
+{
+}
+
 fty::db::Statement fty::db::Connection::prepare(const std::string& sql)
 {
     return fty::db::Statement(std::make_unique<Statement::Impl>(m_impl->m_connection.prepareCached(sql)));
@@ -93,9 +97,17 @@ fty::db::Statement::Statement(std::unique_ptr<Statement::Impl> impl)
 {
 }
 
+fty::db::Statement::~Statement()
+{
+}
+
 fty::db::Row fty::db::Statement::selectRow() const
 {
-    return fty::db::Row(std::make_shared<fty::db::Row::Impl>(m_impl->m_st.selectRow()));
+    try {
+        return fty::db::Row(std::make_shared<fty::db::Row::Impl>(m_impl->m_st.selectRow()));
+    } catch (const tntdb::NotFound& e) {
+        throw NotFound(e.what());
+    }
 }
 
 fty::db::Rows fty::db::Statement::select() const
@@ -183,6 +195,10 @@ void fty::db::Statement::set(const std::string& name, double val)
 
 fty::db::Row::Row(std::shared_ptr<Impl> impl)
     : m_impl(impl)
+{
+}
+
+fty::db::Row::~Row()
 {
 }
 
@@ -416,37 +432,41 @@ fty::db::ConstIterator::difference_type fty::db::ConstIterator::operator-(const 
 // Rows impl
 // =====================================================================================================================
 
-inline fty::db::ConstIterator fty::db::Rows::begin() const
+fty::db::Rows::~Rows()
+{
+}
+
+fty::db::ConstIterator fty::db::Rows::begin() const
 {
     return fty::db::ConstIterator(*this, 0);
 }
 
-inline fty::db::ConstIterator fty::db::Rows::end() const
+fty::db::ConstIterator fty::db::Rows::end() const
 {
     return fty::db::ConstIterator(*this, size());
 }
 
-inline size_t fty::db::Rows::size() const
+size_t fty::db::Rows::size() const
 {
     return m_impl->m_rows.size();
 }
 
-inline bool fty::db::Rows::empty() const
+bool fty::db::Rows::empty() const
 {
     return m_impl->m_rows.empty();
 }
 
-inline fty::db::Row fty::db::Rows::operator[](size_t off) const
+fty::db::Row fty::db::Rows::operator[](size_t off) const
 {
     return fty::db::Row(std::make_unique<fty::db::Row::Impl>(m_impl->m_rows.getRow(unsigned(off))));
 }
 
-inline fty::db::Rows::Rows(std::shared_ptr<Impl> impl)
+fty::db::Rows::Rows(std::shared_ptr<Impl> impl)
     : m_impl(impl)
 {
 }
 
-inline fty::db::Rows::Rows()
+fty::db::Rows::Rows()
 {
 }
 
@@ -454,17 +474,21 @@ inline fty::db::Rows::Rows()
 // Transaction impl
 // =====================================================================================================================
 
-inline fty::db::Transaction::Transaction(Connection& con)
+fty::db::Transaction::Transaction(Connection& con)
     : m_impl(std::make_unique<Impl>(con.m_impl->m_connection))
 {
 }
 
-inline void fty::db::Transaction::commit()
+fty::db::Transaction::~Transaction()
+{
+}
+
+void fty::db::Transaction::commit()
 {
     m_impl->m_trans.commit();
 }
 
-inline void fty::db::Transaction::rollback()
+void fty::db::Transaction::rollback()
 {
     m_impl->m_trans.rollback();
 }

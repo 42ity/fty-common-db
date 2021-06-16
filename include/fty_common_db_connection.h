@@ -40,6 +40,7 @@ class Connection
 {
 public:
     Connection();
+    ~Connection();
     Statement prepare(const std::string& sql);
 
 public:
@@ -66,6 +67,7 @@ class Row
 {
 public:
     Row() = default;
+    ~Row();
 
     template <typename T>
     T get(const std::string& col) const;
@@ -106,6 +108,7 @@ class Rows
 {
 public:
     Rows();
+    ~Rows();
 
     ConstIterator begin() const;
     ConstIterator end() const;
@@ -158,6 +161,8 @@ public:
 class Statement
 {
 public:
+    ~Statement();
+
     template <typename T>
     Statement& bind(const std::string& name, const T& value);
 
@@ -208,6 +213,7 @@ class Transaction
 {
 public:
     Transaction(Connection& con);
+    ~Transaction();
 
     void commit();
     void rollback();
@@ -219,6 +225,13 @@ private:
 
 // =====================================================================================================================
 
+class NotFound: public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
+// =====================================================================================================================
 
 inline std::string multiInsert(std::initializer_list<std::string> cols, size_t count)
 {
