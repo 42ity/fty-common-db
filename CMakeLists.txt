@@ -24,6 +24,7 @@ etn_target(shared ${PROJECT_NAME}
         fty_common_db_exception.h
         fty_common_db.h
         fty_common_db_uptime.h
+        fty_common_db_connection.h
     SOURCES
         fty_common_db_asset.cc
         fty_common_db_asset_insert.cc
@@ -32,12 +33,15 @@ etn_target(shared ${PROJECT_NAME}
         fty_common_db_asset_update.cc
         fty_common_db_dbpath.cc
         fty_common_db_uptime.cc
+        fty_common_db_connection.cc
     USES
         czmq
         cxxtools
         fty_common_logging
         fty_common
         tntdb
+    USES_PUBLIC
+        fty-utils
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})

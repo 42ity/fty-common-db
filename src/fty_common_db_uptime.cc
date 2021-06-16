@@ -27,12 +27,12 @@
 */
 
 #include "fty_common_db_uptime.h"
-#include <vector>
-#include <functional>
-#include <tntdb.h>
+#include "fty_common_asset_types.h"
 #include "fty_common_db_asset.h"
 #include "fty_common_db_dbpath.h"
-#include "fty_common_asset_types.h"
+#include <functional>
+#include <tntdb.h>
+#include <vector>
 
 namespace DBUptime {
 bool get_dc_upses(const char* asset_name, zhash_t* hash)

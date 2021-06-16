@@ -24,22 +24,17 @@
  * \author Alena Chernikava <AlenaChernikava@Eaton.com>
  * \brief Not yet documented file
  */
-#ifndef FTY_COMMON_DB_DBPATH_H
-#define FTY_COMMON_DB_DBPATH_H
-
-#ifdef __cplusplus
+#pragma once
 
 #include <string>
 
 namespace DBConn {
 
 #define PASSWD_FILE "/etc/default/bios-db-rw"
-//! Global string with url to the database
+
+/// Global string with url to the database
 extern std::string url;
 void               dbpath();
 bool               dbreadcredentials();
 
 } // namespace DBConn
-#endif // __cplusplus
-
-#endif // FTY_COMMON_DB_DBPATH_H

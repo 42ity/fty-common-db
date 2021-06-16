@@ -19,10 +19,13 @@
     =========================================================================
 */
 
-#ifndef FTY_COMMON_DB_EXCEPTION_H_INCLUDED
-#define FTY_COMMON_DB_EXCEPTION_H_INCLUDED
+#pragma once
+#include <stdexcept>
+#include <string>
 
-#include <cxxtools/serializationinfo.h>
+namespace cxxtools {
+class SerializationInfo;
+}
 
 namespace fty {
 enum ErrorType : uint8_t
@@ -101,4 +104,3 @@ private:
 void operator<<=(cxxtools::SerializationInfo& si, const CommonException& exception);
 
 } // namespace fty
-#endif

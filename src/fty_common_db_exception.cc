@@ -33,7 +33,7 @@
 
 namespace fty {
 // Public
-void CommonException::throwCommonException (const std::string& data)
+void CommonException::throwCommonException(const std::string& data)
 {
     // get the serializationInfo
     std::stringstream input;

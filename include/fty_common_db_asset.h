@@ -19,13 +19,11 @@
     =========================================================================
 */
 
-#ifndef FTY_COMMON_DB_ASSET_H_INCLUDED
-#define FTY_COMMON_DB_ASSET_H_INCLUDED
+#pragma once
 
 // Note: Consumers MUST be built with C++11 or newer standard due to this:
 #include "fty_common_db_defs.h"
 
-#ifdef __cplusplus
 namespace DBAssets {
 
 // id_to_name_ext_name: converts database id to internal name and extended (unicode) name
@@ -264,8 +262,3 @@ std::set<std::string> get_linked_devices(tntdb::Connection conn, const std::stri
 // (1 -> asset_internal_name_1, 2 -> asset_internal_name_2...)
 db_reply<std::map<int, std::string>> select_daisy_chain(tntdb::Connection& conn, const std::string& asset_id);
 } // namespace DBAssets
-
-void fty_common_db_asset_test(bool verbose);
-
-#endif // namespace
-#endif // FTY_COMMON_DB_ASSET_H_INCLUDED

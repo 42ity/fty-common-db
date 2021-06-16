@@ -44,3 +44,4 @@ typedef struct _fty_common_db_uptime_t fty_common_db_uptime_t;
 #include "fty_common_db_defs.h"
 #include "fty_common_db_exception.h"
 #include "fty_common_db_uptime.h"
+#include "fty_common_db_connection.h"

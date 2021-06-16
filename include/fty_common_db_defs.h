@@ -19,18 +19,16 @@
     =========================================================================
 */
 
-#ifndef FTY_COMMON_DB_DEFS_H_INCLUDED
-#define FTY_COMMON_DB_DEFS_H_INCLUDED
+#pragma once
 
 #include <czmq.h>
 #include <functional>
 #include <inttypes.h>
 #include <tntdb.h>
 
-#ifdef __cplusplus
 #define INPUT_POWER_CHAIN 1
 
-typedef std::function<void(const tntdb::Row&)> row_cb_f;
+using row_cb_f = std::function<void(const tntdb::Row&)>;
 
 template <typename T>
 struct db_reply
@@ -157,8 +155,7 @@ struct db_a_elmnt_t
 
     db_a_elmnt_t(uint32_t _id, const std::string& _name, const std::string& _status, uint32_t _parent_id,
         uint8_t _priority, uint16_t _type_id, uint16_t _subtype_id, const std::string& _asset_tag)
-        :
-        id(_id)
+        : id(_id)
         , name(_name)
         , status(_status)
         , parent_id(_parent_id)
@@ -217,6 +214,3 @@ enum internal_err
     INTERNAL_UNKNOWN,
     INTERNAL_NOT_IMPLEMENTED
 };
-
-#endif
-#endif

@@ -19,8 +19,7 @@
     =========================================================================
 */
 
-#ifndef FTY_COMMON_DB_ASSET_UPDATE_H_INCLUDED
-#define FTY_COMMON_DB_ASSET_UPDATE_H_INCLUDED
+#pragma once
 
 #include <tntdb/connect.h>
 
@@ -37,4 +36,3 @@ int update_asset_element(tntdb::Connection& conn, uint32_t element_id, const cha
 int update_asset_status_by_name(const char* element_name, const char* status);
 
 } // namespace DBAssetsUpdate
-#endif

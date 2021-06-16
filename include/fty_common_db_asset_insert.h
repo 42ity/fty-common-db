@@ -19,15 +19,12 @@
     =========================================================================
 */
 
-#ifndef FTY_COMMON_DB_ASSET_INSERT_H_INCLUDED
-#define FTY_COMMON_DB_ASSET_INSERT_H_INCLUDED
+#pragma once
 
 #include "fty_common_db_defs.h"
 #include <fty_common_asset_types.h>
 #include <inttypes.h>
 #include <tntdb/connect.h>
-
-#ifdef __cplusplus
 
 namespace DBAssetsInsert {
 
@@ -79,5 +76,3 @@ db_reply_t insert_into_monitor_asset_relation(tntdb::Connection& conn, uint16_t 
 // returns error if insert went wrong
 db_reply_t insert_into_monitor_device(tntdb::Connection& conn, uint16_t device_type_id, const char* device_name);
 } // namespace DBAssetsInsert
-#endif
-#endif

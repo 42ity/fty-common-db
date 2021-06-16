@@ -19,8 +19,7 @@
     =========================================================================
 */
 
-#ifndef FTY_COMMON_DB_ASSET_DELETE_H_INCLUDED
-#define FTY_COMMON_DB_ASSET_DELETE_H_INCLUDED
+#pragma once
 
 #include "fty_common_db_defs.h"
 #include <tntdb/connect.h>
@@ -69,4 +68,3 @@ db_reply_t delete_asset_element_from_asset_group(
 // returns error if input params are unacceptable or error happened during delete
 db_reply_t delete_monitor_asset_relation_by_a(tntdb::Connection& conn, uint32_t id);
 } // namespace DBAssetsDelete
-#endif
