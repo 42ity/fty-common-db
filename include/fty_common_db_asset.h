@@ -71,9 +71,17 @@ int select_asset_element_super_parent(tntdb::Connection& conn, uint32_t id, std:
 int select_asset_element_all_with_warranty_end(tntdb::Connection& conn, std::function<void(const tntdb::Row&)>& cb);
 
 // select_assets_by_container: selects assets from given container (DB, room, rack, ...)
-// without - accepted values: "location", "powerchain" or empty string
+// element_id - input container id
+// types - select assets according its type values (accepted values: "datacenter", "room", "row", "rack", "group", "device")
+// subtypes - select assets according its sub type values for device assets (accepted values: "ups", "pdu", "epdu", "pdu", "sts", ...)
+// without - select only assets without field value (accepted values: "location", "powerchain" or any extended attributes)
+// status - select only assets with status field value (accepted values: "active" or "nonactive"), Empty value equals to value "active"
+// configured - "all" (or empty): select all assets (default), "yes": select only configured assets, "no": select only non-configured assets
 // returns 0 if succesful
 // returns -1 if error occurs
+int select_assets_by_container(tntdb::Connection& conn, uint32_t element_id, std::vector<uint16_t> types,
+    std::vector<uint16_t> subtypes, const std::string& without, const std::string& status,
+    const std::string &configured, std::function<void(const tntdb::Row&)> cb);
 
 int select_assets_by_container(tntdb::Connection& conn, uint32_t element_id, std::vector<uint16_t> types,
     std::vector<uint16_t> subtypes, const std::string& without, const std::string& status,
@@ -101,6 +109,18 @@ int select_assets_by_filter(
 // returns -1 if error occurs
 int select_assets_without_container(tntdb::Connection& conn, std::vector<uint16_t> types,
     std::vector<uint16_t> subtypes, std::function<void(const tntdb::Row&)> cb);
+
+// select_assets_all_container: selects all assets (with and without container)
+// types - select assets according its type values (accepted values: "datacenter", "room", "row", "rack", "group", "device")
+// subtypes - select assets according its sub type values for device assets (accepted values: "ups", "pdu", "epdu", "pdu", "sts", ...)
+// without - select only assets without field value (accepted values: "location", "powerchain" or any extended attributes)
+// status - select only assets with status field value (accepted values: "active" or "nonactive"), Empty value equals to value "active"
+// configured - "all" (or empty): select all assets (default), "yes": select only configured assets, "no": select only non-configured assets
+// return 0 on success (even if nothing was found)
+// returns -1 if error occurs
+int select_assets_all_container(tntdb::Connection& conn, std::vector<uint16_t> types, std::vector<uint16_t> subtypes,
+    const std::string& without, const std::string& status, const std::string& configured,
+    std::function<void(const tntdb::Row&)> cb);
 
 // select_assets_all_container: selects all assets (with and wihout container)
 // return 0 on success (even if nothing was found)
