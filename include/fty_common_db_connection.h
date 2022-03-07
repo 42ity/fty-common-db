@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <fmt/format.h>
 #include <fty/string-utils.h>
 #include <fty/traits.h>
