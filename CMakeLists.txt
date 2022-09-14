@@ -51,6 +51,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJ
 etn_test_target(${PROJECT_NAME}
     SOURCES
         test/main.cpp
+        test/fty_common_db_asset.cpp
     USES
         pthread
     SUBDIR
