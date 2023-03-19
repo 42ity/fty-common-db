@@ -52,11 +52,11 @@ db_reply_t delete_asset_link(tntdb::Connection& conn, uint32_t asset_element_id_
         log_error("end: %s, %s", "ignore delete", ret.msg.c_str());
         return ret;
     }
-    if (asset_element_id_src <= 0) {
+    if (asset_element_id_dest <= 0) {
         ret.status     = 0;
         ret.errtype    = DB_ERR;
         ret.errsubtype = DB_ERROR_BADINPUT;
-        ret.msg        = "value <= 0 of asset_element_id_src is not allowed";
+        ret.msg        = "value <= 0 of asset_element_id_dest is not allowed";
         log_error("end: %s, %s", "ignore delete", ret.msg.c_str());
         return ret;
     }

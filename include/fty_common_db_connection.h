@@ -58,7 +58,7 @@ public:
 
 private:
     struct Impl;
-    std::unique_ptr<Impl> m_impl;
+    std::unique_ptr<Impl> m_impl{nullptr};
     friend class Transaction;
 };
 
@@ -95,7 +95,7 @@ protected:
 
 private:
     struct Impl;
-    std::shared_ptr<Impl> m_impl;
+    std::shared_ptr<Impl> m_impl{nullptr};
     Row(std::shared_ptr<Impl> impl);
 
     friend class Statement;
@@ -119,7 +119,7 @@ public:
 
 private:
     struct Impl;
-    std::shared_ptr<Impl> m_impl;
+    std::shared_ptr<Impl> m_impl{nullptr};
     Rows(std::shared_ptr<Impl> impl);
     friend class ConstIterator;
     friend class Statement;
@@ -136,7 +136,7 @@ public:
 private:
     Rows   m_rows;
     Row    m_current;
-    size_t m_offset;
+    size_t m_offset{0};
 
     void setOffset(size_t off);
 
@@ -203,7 +203,7 @@ public:
 
 private:
     struct Impl;
-    std::unique_ptr<Impl> m_impl;
+    std::unique_ptr<Impl> m_impl{nullptr};
     Statement(std::unique_ptr<Impl> impl);
     friend class Connection;
 };
@@ -221,7 +221,7 @@ public:
 
 private:
     struct Impl;
-    std::unique_ptr<Impl> m_impl;
+    std::unique_ptr<Impl> m_impl{nullptr};
 };
 
 // =====================================================================================================================

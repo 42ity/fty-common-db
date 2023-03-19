@@ -20,6 +20,7 @@
 */
 
 #pragma once
+
 #include <stdexcept>
 #include <string>
 
@@ -95,9 +96,9 @@ protected:
     virtual void fillSerializationInfo(cxxtools::SerializationInfo& si) const;
 
 private:
-    int          m_status;
-    ErrorType    m_errorType;
-    ErrorSubtype m_errorSubtype;
+    int          m_status{0};
+    ErrorType    m_errorType{ErrorType::UNKNOWN_ERR};
+    ErrorSubtype m_errorSubtype{ErrorSubtype::INTERNAL_UNKNOWN};
     std::string  m_whatArg;
 };
 

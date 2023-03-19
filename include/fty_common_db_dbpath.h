@@ -34,6 +34,7 @@ namespace DBConn {
 
 /// Global string with url to the database
 extern std::string url;
+
 void               dbpath();
 bool               dbreadcredentials();
 

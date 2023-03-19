@@ -556,7 +556,7 @@ db_reply_t insert_into_asset_links(tntdb::Connection& conn, std::vector<link_t> 
     } else {
         ret.status  = 0;
         ret.errtype = INTERNAL_ERR;
-        log_error("end: %s", "not all links were inserted");
+        log_error("end: not all links were inserted");
         LOG_END;
         return ret;
     }

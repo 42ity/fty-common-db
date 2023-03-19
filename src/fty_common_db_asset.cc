@@ -1821,7 +1821,7 @@ db_reply<std::set<std::pair<uint32_t, uint32_t>>> select_links_by_container(
         // debug helper
         std::vector<std::string> inactive = list_devices_with_status(conn, "nonactive");
         log_trace("Inactive devices omitted:");
-        for (auto dev : inactive) {
+        for (auto& dev : inactive) {
             log_trace("\t- %s", dev.c_str());
         }
 
@@ -2051,7 +2051,7 @@ select ae_name_out.name, aea_daisychain.value as daisy_chain
 
         // Go through the selected elements
         for (auto const& row : result) {
-            int         daisy_chain;
+            int         daisy_chain = 0;
             std::string name;
             row[0].get(name);
             row[1].get(daisy_chain);
