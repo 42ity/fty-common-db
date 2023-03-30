@@ -21,7 +21,8 @@
 
 #pragma once
 
-typedef struct _zhash_t zhash_t;
+#include <czmq.h>
+
 namespace DBUptime {
 
 bool get_dc_upses(const char* asset_name, zhash_t* hash);

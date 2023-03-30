@@ -33,13 +33,13 @@ using row_cb_f = std::function<void(const tntdb::Row&)>;
 template <typename T>
 struct db_reply
 {
-    int         status; // ok/fail
-    int         errtype;
-    int         errsubtype;
-    uint64_t    rowid;         // insert/update or http error code if status == 0
-    uint64_t    affected_rows; // for update/insert/delete
+    int         status{0}; // ok/fail
+    int         errtype{0};
+    int         errsubtype{0};
+    uint64_t    rowid{0};         // insert/update or http error code if status == 0
+    uint64_t    affected_rows{0}; // for update/insert/delete
     std::string msg;
-    zhash_t*    addinfo;
+    zhash_t*    addinfo{nullptr};
     T           item;
 };
 
@@ -77,15 +77,15 @@ inline db_reply<T> db_reply_new(T& item)
 
 struct db_web_basic_element_t
 {
-    uint32_t    id;
+    uint32_t    id{0};
     std::string name;
     std::string status;
-    uint16_t    priority;
-    uint16_t    type_id;
+    uint16_t    priority{0};
+    uint16_t    type_id{0};
     std::string type_name;
-    uint32_t    parent_id;
-    uint16_t    parent_type_id;
-    uint16_t    subtype_id;
+    uint32_t    parent_id{0};
+    uint16_t    parent_type_id{0};
+    uint16_t    subtype_id{0};
     // TODO location
     std::string subtype_name;
     std::string asset_tag;
@@ -94,26 +94,26 @@ struct db_web_basic_element_t
 
 typedef struct _asset_link
 {
-    uint32_t src;     //!< id of src element
-    uint32_t dest;    //!< id of dest element
-    char*    src_out; //!< outlet in src
-    char*    dest_in; //!< inlet in dest
-    uint16_t type;    //!< link type id
+    uint32_t src{0};     //!< id of src element
+    uint32_t dest{0};    //!< id of dest element
+    char*    src_out{nullptr}; //!< outlet in src
+    char*    dest_in{nullptr}; //!< inlet in dest
+    uint16_t type{0};    //!< link type id
 } link_t;
 
 typedef struct _new_asset_link
 {
     std::string src;     //!< id of src element
     std::string dest;    //!< id of dest element
-    char*       src_out; //!< outlet in src
-    char*       dest_in; //!< inlet in dest
-    uint16_t    type;    //!< link type id
+    char*       src_out{nullptr}; //!< outlet in src
+    char*       dest_in{nullptr}; //!< inlet in dest
+    uint16_t    type{0};    //!< link type id
 } new_link_t;
 
 struct db_tmp_link_t
 {
-    uint32_t    src_id;
-    uint32_t    dest_id;
+    uint32_t    src_id{0};
+    uint32_t    dest_id{0};
     std::string src_name;
     std::string src_socket;
     std::string dest_socket;
@@ -130,13 +130,13 @@ struct db_web_element_t
 
 struct db_a_elmnt_t
 {
-    uint32_t                           id;
+    uint32_t                           id{0};
     std::string                        name;
     std::string                        status;
-    uint32_t                           parent_id;
-    uint16_t                           priority;
-    uint16_t                           type_id;
-    uint16_t                           subtype_id;
+    uint32_t                           parent_id{0};
+    uint16_t                           priority{0};
+    uint16_t                           type_id{0};
+    uint16_t                           subtype_id{0};
     std::string                        asset_tag;
     std::map<std::string, std::string> ext;
 

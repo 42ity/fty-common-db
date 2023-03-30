@@ -35,6 +35,7 @@
 #include <vector>
 
 namespace DBUptime {
+
 bool get_dc_upses(const char* asset_name, zhash_t* hash)
 {
     std::vector<std::string>               list_ups{};
@@ -54,6 +55,7 @@ bool get_dc_upses(const char* asset_name, zhash_t* hash)
     if (dc_id < 0) {
         return false;
     }
+
     tntdb::Connection conn = tntdb::connectCached(DBConn::url);
 
     int rv = DBAssets::select_assets_by_container(
@@ -66,16 +68,23 @@ bool get_dc_upses(const char* asset_name, zhash_t* hash)
 
     int i = 0;
     for (auto& ups : list_ups) {
-        char key[14];
-        sprintf(key, "ups%d", i);
+        char key[16];
+        snprintf(key, sizeof(key), "ups%d", i);
         char* ups_name = strdup(ups.c_str());
-        zhash_insert(hash, key, ups_name);
+        if (ups_name) {
+            rv = zhash_insert(hash, key, ups_name);
+            if (rv == 0) {
+                zhash_freefn(hash, key, free); // define free() deallocator for that key
+            }
+            else { // failed or existing
+                zstr_free(&ups_name);
+            }
+        }
         i++;
     }
 
     conn.close();
     return true;
 }
-
 
 } // namespace DBUptime
