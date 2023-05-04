@@ -52,6 +52,7 @@ etn_test_target(${PROJECT_NAME}
     SOURCES
         test/main.cpp
         test/fty_common_db_asset.cpp
+        test/fty_common_db_exception.cpp
     USES
         pthread
     SUBDIR
