@@ -26,6 +26,7 @@
 @end
 */
 
+#include <fty_log.h>
 #include "fty_common_db.h"
 #include <fty_common.h>
 #include <fty_common_db_dbpath.h>
