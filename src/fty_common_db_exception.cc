@@ -27,7 +27,7 @@
 */
 
 #include "fty_common_db_exception.h"
-#include "cxxtools/serializationinfo.h"
+#include <cxxtools/serializationinfo.h>
 #include <sstream>
 #include <fty_common_json.h>
 
