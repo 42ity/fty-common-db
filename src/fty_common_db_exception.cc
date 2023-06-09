@@ -27,21 +27,18 @@
 */
 
 #include "fty_common_db_exception.h"
-#include <cxxtools/jsondeserializer.h>
-#include <cxxtools/jsonserializer.h>
+#include <cxxtools/serializationinfo.h>
 #include <sstream>
+#include <fty_common_json.h>
 
 namespace fty {
 // Public
 void CommonException::throwCommonException(const std::string& data)
 {
     // get the serializationInfo
-    std::stringstream input;
-    input << data;
-
     cxxtools::SerializationInfo si;
-    cxxtools::JsonDeserializer  deserializer(input);
-    deserializer.deserialize(si);
+    JSON::readFromString(data, si);
+
 
     // extract the error code, the message and the extra data
     int                         status       = 0;
@@ -77,15 +74,10 @@ const char* CommonException::what() const noexcept
 
 std::string CommonException::toJson() const
 {
-    std::stringstream        output;
-    cxxtools::JsonSerializer serializer(output);
-    serializer.beautify(true);
-
     cxxtools::SerializationInfo si;
     si <<= *(this);
-    serializer.serialize(si);
 
-    return output.str();
+    return JSON::writeToString(si, true);
 }
 
 void operator<<=(cxxtools::SerializationInfo& si, const CommonException& exception)
