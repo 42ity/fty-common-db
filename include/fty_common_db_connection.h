@@ -4,6 +4,7 @@
 #include <fty/string-utils.h>
 #include <fty/traits.h>
 #include <memory>
+#include <optional>
 
 namespace fty::db {
 
@@ -67,6 +68,7 @@ class Row
 {
 public:
     Row() = default;
+    Row(const Row& other) = default;
     ~Row();
 
     template <typename T>
@@ -76,6 +78,8 @@ public:
 
     template <typename T>
     void get(const std::string& name, T& val) const;
+
+    Row& operator=(const Row& other) = default;
 
 protected:
     std::string getString(const std::string& name) const;
@@ -108,6 +112,7 @@ class Rows
 {
 public:
     Rows();
+    Rows(const Rows& other) = default;
     ~Rows();
 
     ConstIterator begin() const;
