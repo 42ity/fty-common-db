@@ -6,6 +6,9 @@
 #include <fty/traits.h>
 #include <memory>
 
+//#include <iterator>
+//#include <cstddef>
+
 namespace fty::db {
 
 // =====================================================================================================================
@@ -127,11 +130,14 @@ private:
 
 // =====================================================================================================================
 
-class ConstIterator : public std::iterator<std::random_access_iterator_tag, Row>
+class ConstIterator // iterator on Rows
 {
 public:
-    using ConstReference = const value_type&;
-    using ConstPointer   = const value_type*;
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type   = std::ptrdiff_t;
+    using value_type        = Row;
+    using ConstPointer      = const value_type*;
+    using ConstReference    = const value_type&;
 
 private:
     Rows   m_rows;
