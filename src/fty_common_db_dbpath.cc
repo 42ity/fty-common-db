@@ -19,12 +19,14 @@
  */
 
 #include "fty_common_db_dbpath.h"
-#include <fstream>
 #include <fty_common_filesystem.h>
 #include <fty_log.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fstream>
+#include <stdexcept>
 #include <string.h>
+#include <unistd.h> //getuid()
 
 namespace DBConn {
 static std::string s_get_dbpath_wo_trace()
@@ -69,28 +71,59 @@ static void s_dropdq(char* buffer)
 }
 
 // read /etc/default/bios-db-rw and update url global variable
-// @return 0 if OK, -1 if KO
+// @return true if OK, else false
 bool dbreadcredentials()
 {
-    if (!shared::is_file(PASSWD_FILE))
-        return false;
-
-    // and setup db username/password
-    log_debug("dbreadcredentials : Reading %s ..", PASSWD_FILE);
-    std::ifstream dbpasswd{PASSWD_FILE};
-    static char   db_user[256];
-    memset(db_user, '\0', 256);
-    dbpasswd.getline(db_user, 256);
-    s_dropdq(db_user);
+    static char db_user[256];
     static char db_passwd[256];
-    memset(db_passwd, '\0', 256);
-    dbpasswd.getline(db_passwd, 256);
-    s_dropdq(db_passwd);
-    dbpasswd.close();
-    log_debug("dbreadcredentials : setting envvars...");
+
+    log_debug("dbreadcredentials : Reading %s ...", PASSWD_FILE);
+
+    try {
+        errno = 0;
+        std::ifstream f{PASSWD_FILE};
+        if (!f.is_open() || f.fail()) {
+            throw std::runtime_error("Failed to open file");
+        }
+
+        // reset and setup db username/password
+
+        memset(db_user, 0, sizeof(db_user));
+        memset(db_passwd, 0, sizeof(db_passwd));
+
+        f.getline(db_user, sizeof(db_user) - 1);
+        f.getline(db_passwd, sizeof(db_passwd) - 1);
+        if (!f.good() || f.fail()) {
+            throw std::runtime_error("Failed to read file");
+        }
+
+        // remove double quotes
+        s_dropdq(db_user);
+        s_dropdq(db_passwd);
+    }
+    catch (const std::exception& e) {
+        {
+            uid_t uid = getuid();
+            uid_t euid = geteuid();
+            uid_t gid = getgid();
+            uid_t egid = getegid();
+            log_info("uid: %d (%d), gid: %d (%d)", uid, euid, gid, egid);
+        }
+        if (errno != 0) {
+            log_error("errno: %d (%s)", errno, strerror(errno));
+        }
+        log_error("Exception: %s", e.what());
+        return false;
+    }
+
+    log_debug("dbreadcredentials : setting envvars (%s)", db_user);
     putenv(db_user);
     putenv(db_passwd);
+
+    // set url from env. vars
     dbpath();
+
     return true;
 }
+
 } // namespace DBConn
