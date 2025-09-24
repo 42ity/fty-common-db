@@ -346,7 +346,7 @@ int select_asset_element_all_with_warranty_end(tntdb::Connection& conn, std::fun
     try {
         tntdb::Statement st = conn.prepareCached(
             " SELECT "
-            "   v.name as name, t.keytag as keytag, t.value as date "
+            "   v.name as name, v.status as status, t.keytag as keytag, t.value as date "
             " FROM v_web_element v "
             " JOIN t_bios_asset_ext_attributes t "
             " ON "
@@ -366,7 +366,6 @@ int select_asset_element_all_with_warranty_end(tntdb::Connection& conn, std::fun
         return -1;
     }
 }
-
 
 int select_assets_by_container(tntdb::Connection& conn, uint32_t element_id, std::vector<uint16_t> types,
     std::vector<uint16_t> subtypes, const std::string& without, const std::string& status,
@@ -567,7 +566,6 @@ int select_assets_by_container(tntdb::Connection& conn, uint32_t element_id, std
 {
     return select_assets_by_container(conn, element_id, {}, {}, "", "", cb);
 }
-
 
 /**
  * select_assets_by_container_filter: creates condition for type/subtype filtering
