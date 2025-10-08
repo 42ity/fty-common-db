@@ -23,13 +23,14 @@
 
 #include <stdexcept>
 #include <string>
+#include <cstdint>
 
 namespace cxxtools {
 class SerializationInfo;
 }
 
 namespace fty {
-enum ErrorType : uint8_t
+enum class ErrorType : uint8_t
 {
     UNKNOWN_ERR = 0,
     DB_ERR,
@@ -40,7 +41,7 @@ enum ErrorType : uint8_t
     DATA_CONFLICT_ERR,
 };
 
-enum ErrorSubtype : uint8_t
+enum class ErrorSubtype : uint8_t
 {
     DB_ERROR_UNKNOWN  = 0,
     BAD_INPUT_UNKNOWN = 0,
