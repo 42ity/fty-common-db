@@ -80,7 +80,7 @@ std::pair<std::string, std::string> id_to_name_ext_name(uint32_t asset_id)
     return make_pair(name, ext_name);
 }
 
-int64_t name_to_asset_id(std::string asset_name)
+int64_t name_to_asset_id(const std::string& asset_name)
 {
     if (asset_name.empty())
         return 0;
@@ -135,7 +135,7 @@ int64_t name_to_asset_id_check_type(const std::string& asset_name, uint16_t asse
     }
 }
 
-int64_t extname_to_asset_id(std::string asset_ext_name)
+int64_t extname_to_asset_id(const std::string& asset_ext_name)
 {
     try {
         int64_t id = 0;
@@ -161,7 +161,7 @@ int64_t extname_to_asset_id(std::string asset_ext_name)
     }
 }
 
-int name_to_extname(std::string asset_name, std::string& ext_name)
+int name_to_extname(const std::string& asset_name, std::string& ext_name)
 {
     try {
         tntdb::Connection conn = tntdb::connectCached(DBConn::url);
@@ -185,7 +185,7 @@ int name_to_extname(std::string asset_name, std::string& ext_name)
     }
 }
 
-int extname_to_asset_name(std::string asset_ext_name, std::string& asset_name)
+int extname_to_asset_name(const std::string& asset_ext_name, std::string& asset_name)
 {
     try {
         tntdb::Connection conn = tntdb::connectCached(DBConn::url);
