@@ -27,9 +27,9 @@
 */
 
 #include "fty_common_db_exception.h"
+#include <fty_common_json.h>
 #include <cxxtools/serializationinfo.h>
 #include <sstream>
-#include <fty_common_json.h>
 
 namespace fty {
 // Public
@@ -38,7 +38,6 @@ void CommonException::throwCommonException(const std::string& data)
     // get the serializationInfo
     cxxtools::SerializationInfo si;
     JSON::readFromString(data, si);
-
 
     // extract the error code, the message and the extra data
     int                         status       = 0;

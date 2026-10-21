@@ -40,7 +40,7 @@ struct db_reply
     uint64_t    affected_rows{0}; // for update/insert/delete
     std::string msg;
     zhash_t*    addinfo{nullptr};
-    T           item;
+    T           item{};
 };
 
 typedef db_reply<uint64_t> db_reply_t;
