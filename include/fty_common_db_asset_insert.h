@@ -23,8 +23,8 @@
 
 #include "fty_common_db_defs.h"
 #include <fty_common_asset_types.h>
-#include <inttypes.h>
 #include <tntdb/connect.h>
+#include <inttypes.h>
 
 namespace DBAssetsInsert {
 

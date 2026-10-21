@@ -25,10 +25,10 @@
 
 //  External dependencies
 #include <cxxtools/allocator.h>
-#include <tntdb.h>
 #include <fty_log.h>
 #include <fty_common.h>
 #include <czmq.h>
+#include <tntdb.h>
 
 //  FTY_COMMON_DB version macros for compile-time API detection
 #define FTY_COMMON_DB_VERSION_MAJOR 1
